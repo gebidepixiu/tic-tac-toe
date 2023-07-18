@@ -1,0 +1,50 @@
+.gameMain{
+    text-align: left;
+}
+.gameHead>span{
+    color: red;
+}
+.gameList{
+    width: 0px;
+    display: grid;
+    grid-template-columns: auto auto auto auto auto;
+    background-color: #FFD50A;
+}
+.gameListFor2{
+    grid-template-columns: auto auto auto;
+}
+.gameList:hover{
+    cursor: pointer;
+}
+.gameList>li{
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    margin: auto;
+    font-size: 40px;
+    font-weight: 500;
+    border: 1px black solid;
+    position: relative;
+    background-color: #FFD50A;
+    text-align: center;
+}
+.forBlack>span,.forWhite>span{
+    width: 30px;
+    height: 30px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    margin: auto;
+    border-radius: 100px;
+    overflow: hidden;
+}
+.forBlack>span{
+    background-color: #000000;
+}
+
+.forWhite>span{
+    color: #FFFF;
+    background-color: #FFFF;
+}

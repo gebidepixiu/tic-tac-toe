@@ -65,7 +65,6 @@ export const determineLattice = (chessboard: { placingPieces:InLattice, latticeL
         }
         // 判断本条线上是否有该游戏最大棋子
         if (Array.isArray(findValue[findPosition]) && findValue[findPosition].length >= useGameMode) {
-            console.log('成功');
             return true;
         }
         // 本次查询完成把线路反转，用以下一次查询

@@ -5,8 +5,8 @@ li{
   list-style: none;
 }
 ul{
-  margin: 0px;
-  padding: 0px;
+  margin: 0;
+  padding: 0;
 }
 .App-logo {
   height: 40vmin;

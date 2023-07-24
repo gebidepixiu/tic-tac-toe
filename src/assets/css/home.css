@@ -1,13 +1,21 @@
-.gameMain{
-    text-align: left;
-}
-.gameHead>span{
+.gameEnd{
     color: red;
 }
+.Home{
+    text-align: left;
+}
+.gameTitle{
+    color: #FFD50A;
+}
+.gameHitory{
+    max-width: 100px;
+    display: flex;
+    flex-direction: column;
+}
 .gameList{
-    width: 0px;
+    width: 0;
     display: grid;
-    grid-template-columns: auto auto auto auto auto;
+    grid-template-columns: auto auto auto;
     background-color: #FFD50A;
 }
 .gameListFor2{
@@ -28,23 +36,23 @@
     background-color: #FFD50A;
     text-align: center;
 }
-.forBlack>span,.forWhite>span{
+.blackLattice>span,.whiteLattice>span{
     width: 30px;
     height: 30px;
     position: absolute;
-    top: 0px;
-    left: 0px;
-    right: 0px;
-    bottom: 0px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     margin: auto;
     border-radius: 100px;
     overflow: hidden;
 }
-.forBlack>span{
+.blackLattice>span{
     background-color: #000000;
 }
 
-.forWhite>span{
+.whiteLattice>span{
     color: #FFFF;
     background-color: #FFFF;
 }

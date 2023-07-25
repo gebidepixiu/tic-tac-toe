@@ -1,22 +1,28 @@
 import React from 'react';
-import { InLattice } from '../interface/home';
-interface InGameHitoryParams {
-    setHitory: Function;
-    gameHitory: InLattice;
-    useIndex: number;
+import { ILattice } from '../interface/home';
+interface IGameHitoryParams {
+    setHitory: Function;// 设置历史记录
+    gameHitory: ILattice;// 历史记录
+    useIndex: number;// 棋子下标
 }
 
 /***/
-const GameHitory = (props:InGameHitoryParams) => {
+class GameHitory extends React.Component<IGameHitoryParams> {
+    constructor (props:IGameHitoryParams) {
+        super(props);
+    }
+
     /**
      * 设置历史记录 */
-    const onSetHitory = () => {
-        props.setHitory(props.gameHitory, props.useIndex);
+    onSetHitory = () => {
+        this.props.setHitory(this.props.gameHitory, this.props.useIndex);
     };
-    return (
-        <button onClick={onSetHitory}>
-            悔棋到第{props.useIndex + 1}步
-        </button>
-    );
-};
+    render () {
+        return (
+            <button onClick={this.onSetHitory}>
+                悔棋到第{this.props.useIndex + 1}步
+            </button>
+        );
+    }
+}
 export default GameHitory;

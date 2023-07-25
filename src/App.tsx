@@ -4,12 +4,14 @@ import Home from './view/home';
 /**
  * 主入口
  * */
-const App  = () => {
-    return (
-        <div className="App">
-            <Home/>
-        </div>
-    );
-};
+class App extends React.Component {
+    render () {
+        return (
+            <div className="App">
+                <Home/>
+            </div>
+        );
+    }
+}
 
 export default App;

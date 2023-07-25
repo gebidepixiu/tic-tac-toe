@@ -1,49 +1,60 @@
 import React from 'react';
 import { gameType } from '../../../tool/gameTools';
-import { InLattice } from '../interface/home';
-interface InGameLattice{
-    gameLayout:string;
-    latticeList:InLattice[];
-    gameType:number;
-    onLatticeClick:Function;
+import { ILattice } from '../interface/home';
+import { EPlacingPieces, EGameType } from '../constant/home';
+
+interface IGameLattice{
+    lattice:ILattice;// 当前棋子列表
+    gameType:number;// 游戏类型
+    onLatticeClick:Function;// 落子
 }
 /**
  * 渲染棋盘 */
-const GameLattice = (props:InGameLattice) => {
-    const latticeTYpe =  gameType();
+class GameLattice extends React.Component<IGameLattice> {
+    constructor (props:IGameLattice) {
+        super(props);
+    }
+    latticeTYpe =  gameType();
     /**
      * 设置棋子类型 */
-    const setLattice = (value:number) => {
-        if (value === 0) return '';
-        return latticeTYpe[props.gameType][value - 1];
+    setLattice = (value:number) => {
+        if (value === EPlacingPieces.LOCINPIECES_INIT) return '';
+        return this.latticeTYpe[this.props.gameType][value - 1];
     };
     /**
      * 设置棋子，判断胜负 */
-    const onLatticeClick = (value:InLattice) => {
-        props.onLatticeClick(value.id);
+    onLatticeClick = () => {
+        this.props.onLatticeClick(this.props.lattice.id);
     };
     /**
      * 设置棋子样式 */
-    const setClass = (value:InLattice) => {
-        if (props.gameType === 0 && value.value !== 0) {
-            return latticeTYpe[props.gameType][value.value - 1] === '黑' ? 'blackLattice' : 'whiteLattice';
+    setClass = (value:ILattice) => {
+        if (this.props.gameType === EGameType.FIRST_TYPE && value.value !== EPlacingPieces.LOCINPIECES_INIT) {
+            return this.latticeTYpe[this.props.gameType][value.value - 1] === '黑' ? 'blackLattice' : 'whiteLattice';
         }
         return '';
     };
-    return (
-        <ul className={'gameList'} style={{ gridTemplateColumns: props.gameLayout }}>
-            {props.latticeList.map((value:InLattice, index:number) => {
-                return (
-                    <li className={setClass(value)} key={index} onClick={() => onLatticeClick(value)}>
-                        <span>
-                            {setLattice(value.value)}
-                        </span>
-                    </li>
-                );
-            })}
-        </ul>
+    render () {
+        return (
+            <li className={this.setClass(this.props.lattice)} onClick={this.onLatticeClick}>
+                <span>
+                    {this.setLattice(this.props.lattice.value)}
+                </span>
+            </li>
+            // <ul className={'gameList'} style={{ gridTemplateColumns: this.props.gameLayout }}>
+            //     {this.props.latticeList.map((value:ILattice, index:number) => {
+            //         return (
+            //             <li className={this.setClass(value)} key={index} onClick={() => this.onLatticeClick(value)}>
+            //                 <span>
+            //                     {this.setLattice(value.value)}
+            //                 </span>
+            //             </li>
+            //         );
+            //     })}
+            // </ul>
 
-    );
-};
+        );
+    }
+}
 // @ts-ignore
 export default GameLattice;

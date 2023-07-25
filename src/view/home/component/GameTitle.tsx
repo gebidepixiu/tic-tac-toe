@@ -1,32 +1,38 @@
 import React from 'react';
 import { gameType } from '../../../tool/gameTools';
-interface InGameTitle{
-    gameType:number;
-    gameStart:number;
-    placingPieces:boolean;
+import { EGameStart, EPlacingPieces } from '../constant/home';
+interface IGameTitle{
+    gameType:number; // 游戏类型
+    gameStart:number;// 游戏状态
+    placingPieces:number;// 落子人
 }
 /**
  * 游戏进程提示 */
-const GameTitle = (props:InGameTitle) => {
-    const latticeType =  gameType();
+class GameTitle extends React.Component<IGameTitle> {
+    constructor (props:IGameTitle) {
+        super(props);
+    }
+    latticeType =  gameType();
     /**
      * 设置游戏进程提示 */
-    const setTitle = () => {
+    setTitle = () => {
         let titleStr;
-        const titleType = latticeType[props.gameType];
-        if (props.gameStart === -1) {
+        const titleType = this.latticeType[this.props.gameType];
+        if (this.props.gameStart === EGameStart.GAME_DRAW) {
             titleStr = '游戏结束---平局';
-        } else if (props.gameStart === 0) {
-            titleStr = (<>现在下棋的是---<span className={'gameTitle'}>{props.placingPieces ? titleType[0] : titleType[1]}</span></>);
+        } else if (this.props.gameStart === EGameStart.GAME_START) {
+            titleStr = (<>现在下棋的是---<span className={'gameTitle'}>{this.props.placingPieces === EPlacingPieces.LOCINPIECES_X ? titleType[0] : titleType[1]}</span></>);
         } else {
-            titleStr =  (<>游戏结束---胜利者:  <span className={'gameEnd'}>{props.placingPieces ? titleType[1] : titleType[0]}</span></>);
+            titleStr =  (<>游戏结束---胜利者:  <span className={'gameEnd'}>{this.props.placingPieces === EPlacingPieces.LOCINPIECES_X ? titleType[1] : titleType[0]}</span></>);
         }
         return titleStr;
     };
-    return (
-        <div>
-            {setTitle()}
-        </div>
-    );
-};
+    render ()  {
+        return (
+            <div>
+                {this.setTitle()}
+            </div>
+        );
+    }
+}
 export default GameTitle;

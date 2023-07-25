@@ -34,6 +34,9 @@ class GameLattice extends React.Component<IGameLattice> {
         }
         return '';
     };
+    shouldComponentUpdate (nextProps: IGameLattice) {
+        return this.props.lattice.value !== nextProps.lattice.value;
+    }
     render () {
         return (
             <li className={this.setClass(this.props.lattice)} onClick={this.onLatticeClick}>

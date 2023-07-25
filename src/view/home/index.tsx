@@ -159,7 +159,7 @@ class Home extends React.Component<{}, IHome> {
         this.initOrSwitch();
     }
     // 更新状态
-    shouldComponentUpdate (nextProps: any, nextStates:IHome) {
+    shouldComponentUpdate (nextProps:unknown, nextStates:IHome) {
         if (nextStates.layout.chessboardX !== this.state.layout.chessboardX) {
             this.initOrSwitch(nextStates.layout);
         }

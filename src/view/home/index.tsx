@@ -156,12 +156,19 @@ const Home = () => {
                 <GameType onSetGameType={onSetGameType}/>
             </aside>
             <main>
-                <GameLattice
-                    gameLayout={setGameLayout(layout.chessboardX)}
-                    latticeList={chessboard.latticeList}
-                    gameType={gameType}
-                    onLatticeClick={onLatticeClick}
-                />
+                <ul className={'gameList'} style={{ gridTemplateColumns: setGameLayout(layout.chessboardX) }}>
+                    {chessboard.latticeList.map((value:InLattice) => {
+                        return (
+                            <GameLattice
+                                key={value.id}
+                                lattice={value}
+                                gameType={gameType}
+                                onLatticeClick={onLatticeClick}
+                            />
+                        );
+                    })}
+                </ul>
+
 
             </main>
             <footer className={'gameHitory'}>

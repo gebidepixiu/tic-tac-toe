@@ -117,7 +117,7 @@ const Home = () => {
         if (chessboard.placingPieces.id !== -1) {
             let winner;
             // 判断是否有人胜出
-            const gameStart = determineLattice(chessboard, gameMode, layout);
+            const gameStart = determineLattice(chessboard, gameMode);
             if (gameStart) {
                 winner = chessboard.placingPieces.value;
             } else {

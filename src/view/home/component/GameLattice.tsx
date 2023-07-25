@@ -41,18 +41,6 @@ class GameLattice extends React.Component<IGameLattice> {
                     {this.setLattice(this.props.lattice.value)}
                 </span>
             </li>
-            // <ul className={'gameList'} style={{ gridTemplateColumns: this.props.gameLayout }}>
-            //     {this.props.latticeList.map((value:ILattice, index:number) => {
-            //         return (
-            //             <li className={this.setClass(value)} key={index} onClick={() => this.onLatticeClick(value)}>
-            //                 <span>
-            //                     {this.setLattice(value.value)}
-            //                 </span>
-            //             </li>
-            //         );
-            //     })}
-            // </ul>
-
         );
     }
 }

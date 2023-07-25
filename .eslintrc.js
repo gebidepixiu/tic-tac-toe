@@ -6,5 +6,5 @@ module.exports = {
         'eslint-config-ay/react',
         'eslint-config-ay/typescript',
     ],
-    rules: { 'no-console': 'off', 'no-unused-vars': 'off' },
+    rules: { 'no-console': 'off', 'no-unused-vars': 'off'},
 };

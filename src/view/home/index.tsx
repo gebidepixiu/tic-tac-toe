@@ -6,6 +6,8 @@ import { determineLattice, initChessboard, setGameLayout } from '../../tool/game
 import GameLattice from './component/GameLattice';
 import GameType from './component/GameType';
 import { InLattice } from './interface/home';
+import { useSelector, useDispatch } from 'react-redux';
+import { setGameHitory } from '../../store/homeReducer';
 /**
  * 五子棋游戏
  * */
@@ -23,7 +25,8 @@ const Home = () => {
     // 棋盘布局
     const [layout, setLayout] = useState({ chessboardX: 8, chessboardY: 8 });
     // 储存/设置历史记录
-    const [gameHitory, setGameHitory] = useState<InLattice[]>([]);
+    const { gameHitory }:{gameHitory:InLattice[]} = useSelector((state:{homeReducer:{gameHitory:[]}}) => state.homeReducer);
+    const dispatch = useDispatch();
     // 设置游戏状态0继续游戏/-1游戏平局/（1/2）胜利者
     const [gameStart, setGameStart] = useState(0);
     // 游戏类型/用于改变样式
@@ -62,7 +65,8 @@ const Home = () => {
         useChessboard.placingPieces = useChessboard.latticeList[value];
 
         // 设置历史记录
-        setGameHitory([...gameHitory, useChessboard.latticeList[value]]);
+        // setGameHitory([...gameHitory, useChessboard.latticeList[value]]);
+        dispatch(setGameHitory([...gameHitory, useChessboard.latticeList[value]]));
         // 修改下一步落子人
         setPlacingPieces(!placingPieces);
         // 修改棋盘
@@ -98,7 +102,8 @@ const Home = () => {
             latticeList: useLatticeList,
         });
         setPlacingPieces(value.value === 1);
-        setGameHitory(gameHitory.slice(0, index));
+        // setGameHitory();
+        dispatch(setGameHitory(gameHitory.slice(0, index)));
         setGameStart(0);
         setDetermineGameStart((determineGameStart - (gameHitory.length - index)));
     };
@@ -138,7 +143,8 @@ const Home = () => {
         });
         setPlacingPieces(true);
         setGameStart(0);
-        setGameHitory([]);
+        // setGameHitory();
+        dispatch(setGameHitory([]));
         setDetermineGameStart(0);
     }, [gameType]);
     return (

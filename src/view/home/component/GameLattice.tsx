@@ -6,15 +6,16 @@ interface InGameLattice{
     gameType:number;
     onLatticeClick:Function;
 }
+
 /**
  * 渲染棋盘 */
 const GameLattice = (props:InGameLattice) => {
     const latticeTYpe =  gameType();
     /**
      * 设置棋子类型 */
-    const setLattice = (value:number) => {
-        if (value === 0) return '';
-        return latticeTYpe[props.gameType][value - 1];
+    const setLattice = () => {
+        if (props.latticeValue === 0) return '';
+        return latticeTYpe[props.gameType][props.latticeValue - 1];
     };
     /**
      * 设置棋子，判断胜负 */
@@ -29,11 +30,10 @@ const GameLattice = (props:InGameLattice) => {
         }
         return '';
     };
-    console.log('nih');
     return (
         <li className={setClass()} onClick={onLatticeClick}>
             <span>
-                {setLattice(props.latticeValue)}
+                {setLattice()}
             </span>
         </li>
     );

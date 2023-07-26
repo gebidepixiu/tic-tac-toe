@@ -34,6 +34,7 @@ class GameLattice extends React.Component<IGameLattice> {
         }
         return '';
     };
+    // 优化渲染次数
     shouldComponentUpdate (nextProps: IGameLattice) {
         return this.props.lattice.value !== nextProps.lattice.value;
     }

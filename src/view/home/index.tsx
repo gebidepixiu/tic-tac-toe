@@ -164,10 +164,10 @@ class Home extends React.Component<{}, IHome> {
                 </aside>
                 <main>
                     <ul className={'gameList'} style={{ gridTemplateColumns: setGameLayout(this.state.layout.chessboardX) }}>
-                        {this.state.chessboard.map((value:ILattice, index:number) => {
+                        {this.state.chessboard.map((value:ILattice) => {
                             return (
                                 <GameLattice
-                                    key={index}
+                                    key={value.id}
                                     lattice={value}
                                     gameType={this.state.gameType}
                                     onLatticeClick={this.onLatticeClick}
@@ -181,7 +181,7 @@ class Home extends React.Component<{}, IHome> {
                         myHitory.map((value, index: number) => {
                             return (
                                 <GameHitory
-                                    key={index}
+                                    key={value.id}
                                     useIndex={index}
                                     gameHitory={value}
                                     setHitory={this.setHitory}

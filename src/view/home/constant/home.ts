@@ -15,12 +15,12 @@ export enum EGameType {
 }
 
 export enum EGameMode {
-    FIRST_MODE=3, // 游戏连线棋子
-    SECOND_MODE=5, // 游戏连线棋子
+    FIRST_MODE=3, // 游戏连线棋子三子棋
+    SECOND_MODE=5, // 游戏连线棋子五子棋
 }
 export enum ELayout {
-    FIRST_LOYOUT=3, // 游戏格局
-    SECOND_LOYOUT=8, // 游戏格局
+    FIRST_LOYOUT=3, // 游戏格局三子棋
+    SECOND_LOYOUT=8, // 游戏格局五子棋
 }
 
 export const GAME_INIT = -1;

@@ -39,7 +39,7 @@ const Home = () => {
     const [gameType, setGameType] = useState(FIRST_TYPE);
     // 获取当前的落子人
     const [placingPieces, setPlacingPieces] = useState(GAME_START);
-    // 落子人
+    // 落子人类型
     const [placingPiecesType, setPlacingPiecesType] = useState(LOCINPIECES_X);
     /** 设置历史记录，改变棋子样式 */
     const onLatticeClick = (value:number) => {

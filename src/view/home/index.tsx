@@ -12,68 +12,60 @@ import {
 import store from '../../store/store';
 import { setGameHitory } from '../../store/homeReducer';
 
+const { FIRST_LOYOUT, SECOND_LOYOUT } = ELayout;// 游戏布局
+const { FIRST_MODE, SECOND_MODE } = EGameMode;// 游戏
+const { GAME_DRAW, GAME_START } = EGameStart;// 游戏状态
+const { FIRST_TYPE, SECOND_TYPE } = EGameType;// 游戏类型
+const { LOCINPIECES_INIT, LOCINPIECES_X, LOCINPIECES_O } = EPlacingPieces;// 棋手
 
 interface IHome {
-    chessboard:{placingPieces:ILattice, latticeList:ILattice[]};
-    layout:IChessboard;
-    gameStart:number;
-    gameType:number;
-    placingPieces:number;
+    chessboard:ILattice[];// 棋盘
+    layout:IChessboard;// 布局
+    gameStart:number;// 游戏状态
+    gameType:number;// 游戏类型
+    placingPiecesType:number;// 棋手
+    placingPieces:number;// 当前落子人
 }
 /**
  * 五子棋游戏
  * */
 class Home extends React.Component<{}, IHome> {
-    chessboardInit:ILattice = {
-        id: GAME_INIT,
-        value: GAME_INIT,
-        lattice: {
-            latticeX: GAME_INIT,
-            latticeY: GAME_INIT,
-        },
-    };
     constructor (props:{}) {
         super(props);
         this.state = {
-            chessboard: {
-                placingPieces: this.chessboardInit,
-                latticeList: [],
-            },
-            layout: { chessboardX: ELayout.SECOND_LOYOUT, chessboardY: ELayout.SECOND_LOYOUT, gameMode: EGameMode.SECOND_MODE },
-            gameStart: EGameStart.GAME_START,
-            gameType: EGameType.FIRST_TYPE,
-            placingPieces: EPlacingPieces.LOCINPIECES_X,
+            chessboard: [],
+            layout: { chessboardX: SECOND_LOYOUT, chessboardY: SECOND_LOYOUT, gameMode: SECOND_MODE },
+            gameStart: GAME_START,
+            gameType: FIRST_TYPE,
+            placingPieces: -1,
+            placingPiecesType: LOCINPIECES_X,
         };
     }
-    // 判断游戏平局
     /** 设置历史记录，改变棋子样式 */
     onLatticeClick = (value:number) => {
-        if (this.state.chessboard.latticeList[value].value !== EPlacingPieces.LOCINPIECES_INIT ||
-            this.state.gameStart !== EGameStart.GAME_START) return;
-        const useLatticeList = new Array(this.state.chessboard.latticeList.length);
+        if (this.state.chessboard[value].value !== LOCINPIECES_INIT ||
+            this.state.gameStart !== GAME_START) return;
+        const useLatticeList = new Array(this.state.chessboard.length);
         const myHitory = store.getState().homeReducer.gameHitory;
         // 储存入历史记录
-        this.state.chessboard.latticeList.forEach((value, index:number) => {
+        this.state.chessboard.forEach((value, index:number) => {
             useLatticeList[index] = {
                 id: value.id,
                 lattice: value.lattice,
                 value: value.value,
             };
         });
-        const useChessboard = {
-            placingPieces: this.chessboardInit,
-            latticeList: useLatticeList,
-        };
+        const useChessboard = useLatticeList;
         // 设置落子人
-        useChessboard.latticeList[value].value = this.state.placingPieces;
-        useChessboard.placingPieces = useChessboard.latticeList[value];
+        useChessboard[value].value = this.state.placingPiecesType;
         // 设置历史记录
-        store.dispatch(setGameHitory([...myHitory, useChessboard.latticeList[value]]));
+        store.dispatch(setGameHitory([...myHitory, useChessboard[value]]));
         // 修改下一步落子人
         this.setState({
-            placingPieces: this.state.placingPieces === EPlacingPieces.LOCINPIECES_X
-                ? EPlacingPieces.LOCINPIECES_O : EPlacingPieces.LOCINPIECES_X,
+            placingPiecesType: this.state.placingPiecesType === LOCINPIECES_X
+                ? LOCINPIECES_O : LOCINPIECES_X,
         });
+        this.setState({ placingPieces: useChessboard[value].id });
         // 修改棋盘
         this.setState({ chessboard: useChessboard });
     };
@@ -83,35 +75,31 @@ class Home extends React.Component<{}, IHome> {
         const myHitory = store.getState().homeReducer.gameHitory;
         const useHitory = myHitory.slice(index);
         const useLatticeList = [];
-        forLatticeList:for (let latticeI = 0; latticeI <  this.state.chessboard.latticeList.length; latticeI++) {
+        forLatticeList:for (let latticeI = 0; latticeI <  this.state.chessboard.length; latticeI++) {
             for (let hitoryI = 0; hitoryI < useHitory.length; hitoryI++) {
-                if (useHitory[hitoryI].id ===  this.state.chessboard.latticeList[latticeI].id) {
+                if (useHitory[hitoryI].id ===  this.state.chessboard[latticeI].id) {
                     useLatticeList.push({
                         ...useHitory[hitoryI],
-                        value: EPlacingPieces.LOCINPIECES_INIT,
+                        value: LOCINPIECES_INIT,
                     });
                     continue forLatticeList;
                 }
             }
-            useLatticeList.push(this.state.chessboard.latticeList[latticeI]);
+            useLatticeList.push(this.state.chessboard[latticeI]);
         }
-        this.setState({
-            chessboard: {
-                placingPieces: index === 0 ? this.chessboardInit : myHitory[index - 1],
-                latticeList: useLatticeList,
-            },
-        });
-        this.setState({ placingPieces: value.value });
+        this.setState({ placingPieces: index === 0 ? -1 : myHitory[index - 1].id });
+        this.setState({ chessboard: useLatticeList });
+        this.setState({ placingPiecesType: value.value });
         store.dispatch(setGameHitory(myHitory.slice(0, index)));
-        this.setState({ gameStart: EGameStart.GAME_START });
+        this.setState({ gameStart: GAME_START });
     };
 
     /**
      * 切换游戏类型 */
     onSetGameType = () => {
-        const useGameLayout = this.state.gameType === EGameType.FIRST_TYPE ? ELayout.FIRST_LOYOUT : ELayout.SECOND_LOYOUT;
-        const useGameMode = this.state.gameType === EGameType.FIRST_TYPE ? EGameType.SECOND_TYPE : EGameType.FIRST_TYPE;
-        const gameMode = this.state.layout.gameMode === EGameMode.SECOND_MODE ? EGameMode.FIRST_MODE : EGameMode.SECOND_MODE;
+        const useGameLayout = this.state.gameType === FIRST_TYPE ? FIRST_LOYOUT : SECOND_LOYOUT;
+        const useGameMode = this.state.gameType === FIRST_TYPE ? SECOND_TYPE : FIRST_TYPE;
+        const gameMode = this.state.layout.gameMode === SECOND_MODE ? FIRST_MODE : SECOND_MODE;
         this.setState({
             layout: {
                 chessboardX: useGameLayout,
@@ -121,37 +109,34 @@ class Home extends React.Component<{}, IHome> {
         });
         this.setState({ gameType: useGameMode });
     };
+
     // 初始化或者切换游戏
     initOrSwitch = (layout?:IChessboard) => {
-        this.setState({
-            chessboard: {
-                ...this.state.chessboard,
-                latticeList: initChessboard(layout || this.state.layout),
-            },
-        });
-        this.setState({ placingPieces: EPlacingPieces.LOCINPIECES_X });
-        this.setState({ gameStart: EGameStart.GAME_START });
+        this.setState({ chessboard: initChessboard(layout || this.state.layout) });
+        this.setState({ placingPieces: GAME_INIT });
+        this.setState({ placingPiecesType: LOCINPIECES_X });
+        this.setState({ gameStart: GAME_START });
         store.dispatch(setGameHitory([]));
     };
 
     // 判断胜负
     fallingChess = (newState:IHome) => {
-        const { chessboard, layout } = newState;
+        const { chessboard, layout, placingPieces } = newState;
         const { gameHitory } = store.getState().homeReducer;
-        if (chessboard.placingPieces.id !== GAME_INIT) {
+        if (placingPieces !== GAME_INIT) {
             let winner;
             // 判断是否有人胜出
-            const gameStart = determineLattice(chessboard, layout.gameMode);
+            const gameStart = determineLattice({ latticeList: chessboard, placingPieces: chessboard[placingPieces] }, layout.gameMode);
             if (gameStart) {
-                winner = chessboard.placingPieces.value;
+                winner = chessboard[placingPieces].value;
             } else {
-                winner = EGameStart.GAME_DRAW;
+                winner = GAME_DRAW;
                 // 判断游戏是否平局
-                if (gameHitory.length !== chessboard.latticeList.length) {
-                    winner = EGameStart.GAME_START;
+                if (gameHitory.length !== chessboard.length) {
+                    winner = GAME_START;
                 }
             }
-            if (winner !== EGameStart.GAME_START) this.setState({ gameStart: winner });
+            if (winner !== GAME_START) this.setState({ gameStart: winner });
         }
     };
     // 初始化
@@ -163,7 +148,7 @@ class Home extends React.Component<{}, IHome> {
         if (nextStates.layout.chessboardX !== this.state.layout.chessboardX) {
             this.initOrSwitch(nextStates.layout);
         }
-        if (nextStates.chessboard.placingPieces.id !== this.state.chessboard.placingPieces.id) {
+        if (nextStates.placingPieces !== this.state.placingPieces) {
             this.fallingChess(nextStates);
         } return true;
     }
@@ -172,14 +157,14 @@ class Home extends React.Component<{}, IHome> {
         return (
             <div className={'Home'}>
                 <header>
-                    <GameTitle placingPieces={this.state.placingPieces} gameType={this.state.gameType} gameStart={this.state.gameStart}/>
+                    <GameTitle placingPieces={this.state.placingPiecesType} gameType={this.state.gameType} gameStart={this.state.gameStart}/>
                 </header>
                 <aside>
                     <GameType onSetGameType={this.onSetGameType}/>
                 </aside>
                 <main>
                     <ul className={'gameList'} style={{ gridTemplateColumns: setGameLayout(this.state.layout.chessboardX) }}>
-                        {this.state.chessboard.latticeList.map((value:ILattice, index:number) => {
+                        {this.state.chessboard.map((value:ILattice, index:number) => {
                             return (
                                 <GameLattice
                                     key={index}
@@ -190,12 +175,6 @@ class Home extends React.Component<{}, IHome> {
                             );
                         })}
                     </ul>
-                    {/* <GameLattice */}
-                    {/*    gameLayout={setGameLayout(this.state.layout.chessboardX)} */}
-                    {/*    latticeList={this.state.chessboard.latticeList} */}
-                    {/*    gameType={this.state.gameType} */}
-                    {/*    onLatticeClick={this.onLatticeClick} */}
-                    {/* /> */}
                 </main>
                 <footer className={'gameHitory'}>
                     {

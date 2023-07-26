@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import GameTitle from './component/GameTitle';
 import GameHitory from './component/GameHitory';
 import '../../assets/css/home.css';
@@ -28,51 +28,51 @@ const Home = () => {
     const { gameHitory }:{gameHitory:InLattice[]} = useSelector((state:{homeReducer:{gameHitory:[]}}) => state.homeReducer);
     const dispatch = useDispatch();
     // 设置游戏状态0继续游戏/-1游戏平局/（1/2）胜利者
-    const [gameStart, setGameStart] = useState(0);
+    const [gameStart, setGameStart] = useState(-1);
     // 游戏类型/用于改变样式
     const [gameType, setGameType] = useState(0);
     // 设置游戏类型
     const [gameMode, setGameMode] = useState(5);
     // 判断落子人
-    const [placingPieces, setPlacingPieces] = useState(true);
+    const [placingPieces, setPlacingPieces] = useState(false);
     // 判断游戏平局
     const [determineGameStart, setDetermineGameStart] = useState(0);
     /** 设置历史记录，改变棋子样式 */
-    const onLatticeClick = (value:number) => {
-        if (chessboard.latticeList[value].value !== 0 || gameStart !== 0) return;
-        const useLatticeList = new Array(chessboard.latticeList.length);
-        // 储存入历史记录
-        chessboard.latticeList.forEach((value, index:number) => {
-            useLatticeList[index] = {
-                id: value.id,
-                lattice: value.lattice,
-                value: value.value,
-            };
-        });
-        const useChessboard = {
-            placingPieces: {
-                id: -1,
-                value: -1,
-                lattice: {
-                    latticeX: -1,
-                    latticeY: -1,
-                },
-            },
-            latticeList: useLatticeList,
-        };
-        // 设置落子人
-        useChessboard.latticeList[value].value = placingPieces ? 1 : 2;
-        useChessboard.placingPieces = useChessboard.latticeList[value];
-
-        // 设置历史记录
-        // setGameHitory([...gameHitory, useChessboard.latticeList[value]]);
-        dispatch(setGameHitory([...gameHitory, useChessboard.latticeList[value]]));
-        // 修改下一步落子人
-        setPlacingPieces(!placingPieces);
-        // 修改棋盘
-        setChessboard(useChessboard);
-        setDetermineGameStart(determineGameStart + 1);
-    };
+    // const onLatticeClick = (value:number) => {
+    //     if (chessboard.latticeList[value].value !== 0 || gameStart !== 0) return;
+    //     const useLatticeList = new Array(chessboard.latticeList.length);
+    //     // 储存入历史记录
+    //     chessboard.latticeList.forEach((value, index:number) => {
+    //         useLatticeList[index] = {
+    //             id: value.id,
+    //             lattice: value.lattice,
+    //             value: value.value,
+    //         };
+    //     });
+    //     const useChessboard = {
+    //         placingPieces: {
+    //             id: -1,
+    //             value: -1,
+    //             lattice: {
+    //                 latticeX: -1,
+    //                 latticeY: -1,
+    //             },
+    //         },
+    //         latticeList: useLatticeList,
+    //     };
+    //     // 设置落子人
+    //     useChessboard.latticeList[value].value = placingPieces ? 1 : 2;
+    //     useChessboard.placingPieces = useChessboard.latticeList[value];
+    //
+    //     // 设置历史记录
+    //     // setGameHitory([...gameHitory, useChessboard.latticeList[value]]);
+    //     dispatch(setGameHitory([...gameHitory, useChessboard.latticeList[value]]));
+    //     // 修改下一步落子人
+    //     setPlacingPieces(!placingPieces);
+    //     // 修改棋盘
+    //     setChessboard(useChessboard);
+    //     setDetermineGameStart(determineGameStart + 1);
+    // };
     /**
      * 重置历史记录/回退游戏进程 */
     const setHitory = (value:InLattice, index:number) => {
@@ -107,7 +107,6 @@ const Home = () => {
         setGameStart(0);
         setDetermineGameStart((determineGameStart - (gameHitory.length - index)));
     };
-
     /**
      * 切换游戏类型 */
     const onSetGameType = () => {
@@ -137,9 +136,10 @@ const Home = () => {
     }, [chessboard]);
     // 初始化游戏状态/切换游戏类型后的还原数据
     useEffect(() => {
+        const useLatticeList = initChessboard(layout);
         setChessboard({
             ...chessboard,
-            latticeList: initChessboard(layout),
+            latticeList: useLatticeList,
         });
         setPlacingPieces(true);
         setGameStart(0);
@@ -147,6 +147,43 @@ const Home = () => {
         dispatch(setGameHitory([]));
         setDetermineGameStart(0);
     }, [gameType]);
+    /***/
+    const onLatticeClick = useCallback((value:number) => {
+        if (chessboard.latticeList[value].value !== 0 || gameStart !== 0) return;
+        const chessboards = chessboard.latticeList;
+        const useLatticeList = new Array(chessboards.length);
+        // 储存入历史记录
+        chessboards.forEach((value:any, index:number) => {
+            useLatticeList[index] = {
+                id: value.id,
+                lattice: value.lattice,
+                value: value.value,
+            };
+        });
+        const useChessboard = {
+            placingPieces: {
+                id: -1,
+                value: -1,
+                lattice: {
+                    latticeX: -1,
+                    latticeY: -1,
+                },
+            },
+            latticeList: useLatticeList,
+        };
+        // 设置落子人
+        useChessboard.latticeList[value].value = placingPieces ? 1 : 2;
+        useChessboard.placingPieces = useChessboard.latticeList[value];
+
+        // 设置历史记录
+        // setGameHitory([...gameHitory, useChessboard.latticeList[value]]);
+        dispatch(setGameHitory([...gameHitory, useChessboard.latticeList[value]]));
+        // 修改下一步落子人
+        setPlacingPieces(!placingPieces);
+        // 修改棋盘
+        setChessboard(useChessboard);
+        setDetermineGameStart(determineGameStart + 1);
+    }, [placingPieces]);
     return (
         <div className={'Home'}>
             <header>
@@ -161,15 +198,14 @@ const Home = () => {
                         return (
                             <GameLattice
                                 key={value.id}
-                                lattice={value}
+                                latticeId={value.id}
+                                latticeValue={value.value}
                                 gameType={gameType}
                                 onLatticeClick={onLatticeClick}
                             />
                         );
                     })}
                 </ul>
-
-
             </main>
             <footer className={'gameHitory'}>
                 {

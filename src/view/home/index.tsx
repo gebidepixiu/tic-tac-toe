@@ -101,7 +101,7 @@ class Home extends React.Component<{}, IHome> {
 
         // 设置落子人
         useChessboard[value].value = this.state.placingPiecesType;
-
+        console.log(this.backPlList);
         // 设置历史记录
         store.dispatch(setGameHitory([...myHitory, {
             backPlList: this.backPlList,
@@ -136,6 +136,7 @@ class Home extends React.Component<{}, IHome> {
             }
             useLatticeList.push(this.state.chessboard[latticeI]);
         }
+        this.backPlList = myHitory[index].backPlList;
         // 回退历史记录
         this.setState({
             chessboard: useLatticeList,

@@ -1,7 +1,7 @@
 import { IChessboard, ILattice, EPlacingPieces } from '../view/home/interface/home';
 
 
-const { LOCINPIECES_X } = EPlacingPieces;
+const { LOCINPIECES_X, LOCINPIECES_O } = EPlacingPieces;
 
 interface IGameState {
     gameState: boolean;
@@ -77,7 +77,7 @@ export const determineLattice = (chessboard: { placingPieces: ILattice, latticeL
         // 设置游戏状态是否结束游戏
         gameState: false,
         // 设置获取上次ai点击之后的所有可能赢的点位
-        backPlList: [],
+        backPlList,
         // 设置ai可以点击的点
         currentPlId: -1,
     };
@@ -117,7 +117,7 @@ export const determineLattice = (chessboard: { placingPieces: ILattice, latticeL
         findPath[findPosition].type = !findPath[findPosition].type;
         findPosition++;
     }
-    gameState.backPlList = findValue;
+    if (placingPieces.value === LOCINPIECES_O) gameState.backPlList = findValue;
     if (placingPieces.value === LOCINPIECES_X) {
         // aiGame(backPlList, findValue, layout, useLatticeList);
         // 获取ai的落子点
@@ -187,7 +187,7 @@ const aiSelect = (findValue: Array<ILattice[]>, backPlList: Array<ILattice[]>, l
  * ai优先落中子
  * @param latticeList 棋盘布局
  */
-export const aiGetMiddle = (latticeList:ILattice[]) => {
+export const aiGetMiddle = (latticeList: ILattice[]) => {
     const getMiddlePl = parseInt(String(latticeList.length / 2));
     if (latticeList[getMiddlePl].value === 0) {
         return latticeList[getMiddlePl].id;

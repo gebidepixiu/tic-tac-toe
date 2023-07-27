@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { ILattice } from '../view/home/interface/home';
-const initialState:{gameHitory:ILattice[]} = { gameHitory: [] };
+const initialState:{gameHitory: {lattice: ILattice, backPlList:Array<ILattice[]> }[]} = { gameHitory: [] };
 const homeReducer = createSlice({
     name: 'useHomeGame',
     initialState,

@@ -98,10 +98,15 @@ class Home extends React.Component<{}, IHome> {
             };
         });
         const useChessboard = useLatticeList;
+
         // 设置落子人
         useChessboard[value].value = this.state.placingPiecesType;
+
         // 设置历史记录
-        store.dispatch(setGameHitory([...myHitory, useChessboard[value]]));
+        store.dispatch(setGameHitory([...myHitory, {
+            backPlList: this.backPlList,
+            lattice: useChessboard[value],
+        }]));
         // 修改下一步落子人
         this.setState({
             chessboard: useChessboard,
@@ -121,9 +126,9 @@ class Home extends React.Component<{}, IHome> {
         const useLatticeList = [];
         forLatticeList:for (let latticeI = 0; latticeI < this.state.chessboard.length; latticeI++) {
             for (let hitoryI = 0; hitoryI < useHitory.length; hitoryI++) {
-                if (useHitory[hitoryI].id === this.state.chessboard[latticeI].id) {
+                if (useHitory[hitoryI].lattice.id === this.state.chessboard[latticeI].id) {
                     useLatticeList.push({
-                        ...useHitory[hitoryI],
+                        ...useHitory[hitoryI].lattice,
                         value: LOCINPIECES_INIT,
                     });
                     continue forLatticeList;
@@ -136,7 +141,7 @@ class Home extends React.Component<{}, IHome> {
             chessboard: useLatticeList,
             placingPiecesType: value.value,
             gameStart: GAME_START,
-            placingPieces: index === 0 ? -1 : myHitory[index - 1].id,
+            placingPieces: index === 0 ? -1 : myHitory[index - 1].lattice.id,
         });
         store.dispatch(setGameHitory(myHitory.slice(0, index)));
     };
@@ -215,8 +220,10 @@ class Home extends React.Component<{}, IHome> {
      * @description AI先手
      * */
     onAIStart = () => {
+        const aiStart = aiGetMiddle(this.state.chessboard);
+        if (aiStart < 0) return;
         this.setState({ placingPiecesType: LOCINPIECES_O }, () => {
-            this.onLatticeClick(aiGetMiddle(this.state.chessboard));
+            this.onLatticeClick(aiStart);
         });
     };
     // 初始化
@@ -267,9 +274,9 @@ class Home extends React.Component<{}, IHome> {
                         myHitory.map((value, index: number) => {
                             return (
                                 <GameHitory
-                                    key={value.id}
+                                    key={value.lattice.id}
                                     useIndex={index}
-                                    gameHitory={value}
+                                    gameHitory={value.lattice}
                                     setHitory={this.setHitory}
                                 />
                             );

@@ -1,20 +1,25 @@
 import React from 'react';
 import { gameType } from '../../../tool/gameTools';
-import { EGameStart, EPlacingPieces } from '../constant/home';
+import { EGameStart, EPlacingPieces } from '../interface/home';
 interface IGameTitle{
-    gameType:number; // 游戏类型
-    gameStart:number;// 游戏状态
-    placingPieces:number;// 落子人
+    // 游戏类型
+    gameType:number;
+    // 游戏状态
+    gameStart:number;
+    // 落子人
+    placingPieces:number;
 }
 /**
- * 游戏进程提示 */
+ * @description 游戏进程提示
+ */
 class GameTitle extends React.Component<IGameTitle> {
     constructor (props:IGameTitle) {
         super(props);
     }
     latticeType =  gameType();
     /**
-     * 设置游戏进程提示 */
+     * @description 设置游戏进程提示
+     */
     setTitle = () => {
         let titleStr;
         const titleType = this.latticeType[this.props.gameType];

@@ -1,19 +1,25 @@
 import React from 'react';
 import { ILattice } from '../interface/home';
 interface IGameHitoryParams {
-    setHitory: Function;// 设置历史记录
-    gameHitory: ILattice;// 历史记录
-    useIndex: number;// 棋子下标
+    // 设置历史记录
+    setHitory: Function;
+    // 历史记录
+    gameHitory: ILattice;
+    // 棋子下标
+    useIndex: number;
 }
 
-/***/
+/**
+* @description 游戏历史记录
+* */
 class GameHitory extends React.Component<IGameHitoryParams> {
     constructor (props:IGameHitoryParams) {
         super(props);
     }
 
     /**
-     * 设置历史记录 */
+    * @description 设置历史记录
+    * */
     onSetHitory = () => {
         this.props.setHitory(this.props.gameHitory, this.props.useIndex);
     };

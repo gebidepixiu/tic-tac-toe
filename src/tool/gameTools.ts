@@ -8,7 +8,7 @@ interface IGameState {
     backPlList: ILattice[][];
     currentPlId: number;
 }
-
+// 定义查询的落子点的8条角度
 const useFindPath: { id: number, value: number[], type: boolean }[] = [
     {
         id: 0,
@@ -141,6 +141,7 @@ const aiSelect = (findValue: Array<ILattice[]>, backPlList: Array<ILattice[]>, l
     if (backPlList && backPlList.length > 1) {
         useBackPlList = backPlList.filter((start: ILattice[]) => start.length === (layout.gameMode - 1));
     }
+    // 获取所有胜利点位
     const useVictoriesPl = victoriesPl.slice();
     // 存放所有可能连线的数组
     const plList: Array<ILattice[]> = [];

@@ -101,7 +101,6 @@ class Home extends React.Component<{}, IHome> {
 
         // 设置落子人
         useChessboard[value].value = this.state.placingPiecesType;
-        console.log(this.backPlList);
         // 设置历史记录
         store.dispatch(setGameHitory([...myHitory, {
             backPlList: this.backPlList,
@@ -207,7 +206,9 @@ class Home extends React.Component<{}, IHome> {
                 this.setState({ gameStart: winner });
                 return;
             }
-            // 设置上次落子周边连续
+
+
+            // 储存上次ai落子周边连续，用于下次判断
             this.backPlList = gameState.backPlList;
             // ai落子
             if (chessboard[placingPieces].value === LOCINPIECES_X && gameState.currentPlId !== -1) {

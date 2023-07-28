@@ -16,7 +16,7 @@ class GameTitle extends React.Component<IGameTitle> {
     constructor (props:IGameTitle) {
         super(props);
     }
-    latticeType =  gameType();
+    latticeType = gameType();
     /**
      * @description 设置游戏进程提示
      */

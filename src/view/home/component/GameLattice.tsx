@@ -17,7 +17,7 @@ class GameLattice extends React.Component<IGameLattice> {
     constructor (props:IGameLattice) {
         super(props);
     }
-    latticeTYpe =  gameType();
+    latticeTYpe = gameType();
     /**
      * @description 设置棋子类型
      * @param value 棋子类型0/1

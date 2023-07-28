@@ -59,11 +59,9 @@ interface IHome {
 
 /**
  * @description 五子棋游戏主入口
- * */
+ **/
 class Home extends React.Component<{}, IHome> {
     // 记录上一步附近附近同类型落子位置
-    backPlList: Array<ILattice[]> = [];
-
     constructor (props: {}) {
         super(props);
         this.state = {
@@ -83,7 +81,7 @@ class Home extends React.Component<{}, IHome> {
     /**
      * 设置历史记录，改变棋子样式
      * @param value 点击棋子的id/下标
-     */
+     **/
     onLatticeClick = (value: number) => {
         if (this.state.chessboard[value].value !== LOCINPIECES_INIT ||
             this.state.gameStart !== GAME_START) return;
@@ -102,10 +100,7 @@ class Home extends React.Component<{}, IHome> {
         // 设置落子人
         useChessboard[value].value = this.state.placingPiecesType;
         // 设置历史记录
-        store.dispatch(setGameHitory([...myHitory, {
-            backPlList: this.backPlList,
-            lattice: useChessboard[value],
-        }]));
+        store.dispatch(setGameHitory([...myHitory, useChessboard[value]]));
         // 修改下一步落子人
         this.setState({
             chessboard: useChessboard,
@@ -118,16 +113,16 @@ class Home extends React.Component<{}, IHome> {
      * 重置历史记录/回退游戏进程
      * @param value 需要重置到哪步的落子状态
      * @param index 需要重置到哪步的下标
-     */
+     **/
     setHitory = (value: ILattice, index: number) => {
         const myHitory = store.getState().homeReducer.gameHitory;
         const useHitory = myHitory.slice(index);
         const useLatticeList = [];
         forLatticeList:for (let latticeI = 0; latticeI < this.state.chessboard.length; latticeI++) {
             for (let hitoryI = 0; hitoryI < useHitory.length; hitoryI++) {
-                if (useHitory[hitoryI].lattice.id === this.state.chessboard[latticeI].id) {
+                if (useHitory[hitoryI].id === this.state.chessboard[latticeI].id) {
                     useLatticeList.push({
-                        ...useHitory[hitoryI].lattice,
+                        ...useHitory[hitoryI],
                         value: LOCINPIECES_INIT,
                     });
                     continue forLatticeList;
@@ -135,20 +130,19 @@ class Home extends React.Component<{}, IHome> {
             }
             useLatticeList.push(this.state.chessboard[latticeI]);
         }
-        this.backPlList = myHitory[index].backPlList;
         // 回退历史记录
         this.setState({
             chessboard: useLatticeList,
             placingPiecesType: value.value,
             gameStart: GAME_START,
-            placingPieces: index === 0 ? -1 : myHitory[index - 1].lattice.id,
+            placingPieces: index === 0 ? -1 : myHitory[index - 1].id,
         });
         store.dispatch(setGameHitory(myHitory.slice(0, index)));
     };
 
     /**
      * @description 切换游戏类型
-     * */
+     **/
     onSetGameType = () => {
         const useGameLayout = this.state.gameType === FIRST_TYPE ? FIRST_LOYOUT : SECOND_LOYOUT;
         const useGameMode = this.state.gameType === FIRST_TYPE ? SECOND_TYPE : FIRST_TYPE;
@@ -165,7 +159,7 @@ class Home extends React.Component<{}, IHome> {
 
     /**
      * @description 初始化或者切换游戏
-     * */
+     **/
     initOrSwitch = (layout?: IChessboard) => {
         this.setState({
             gameStart: GAME_START,
@@ -178,7 +172,7 @@ class Home extends React.Component<{}, IHome> {
 
     /**
      * @description 判断胜负
-     * */
+     **/
     fallingChess = (newState: IHome) => {
         const {
             chessboard,
@@ -192,7 +186,7 @@ class Home extends React.Component<{}, IHome> {
             const gameState = determineLattice({
                 latticeList: chessboard,
                 placingPieces: chessboard[placingPieces],
-            }, layout, this.backPlList);
+            }, layout);
             if (gameState.gameState) {
                 winner = chessboard[placingPieces].value;
             } else {
@@ -206,10 +200,6 @@ class Home extends React.Component<{}, IHome> {
                 this.setState({ gameStart: winner });
                 return;
             }
-
-
-            // 储存上次ai落子周边连续，用于下次判断
-            this.backPlList = gameState.backPlList;
             // ai落子
             if (chessboard[placingPieces].value === LOCINPIECES_X && gameState.currentPlId !== -1) {
                 setTimeout(() => {
@@ -220,7 +210,7 @@ class Home extends React.Component<{}, IHome> {
     };
     /**
      * @description AI先手
-     * */
+     **/
     onAIStart = () => {
         const aiStart = aiGetMiddle(this.state.chessboard);
         if (aiStart < 0) return;
@@ -276,9 +266,9 @@ class Home extends React.Component<{}, IHome> {
                         myHitory.map((value, index: number) => {
                             return (
                                 <GameHitory
-                                    key={value.lattice.id}
+                                    key={value.id}
                                     useIndex={index}
-                                    gameHitory={value.lattice}
+                                    gameHitory={value}
                                     setHitory={this.setHitory}
                                 />
                             );

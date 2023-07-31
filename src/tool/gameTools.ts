@@ -154,8 +154,6 @@ const aiSelect = (placingPieces: ILattice, gameMode: number, useLatticeList: Map
                 latticeSelectAll.currentPlId = useLatticeListKeyKey.id;
                 continue;
             }
-            console.log(findValue);
-            console.log(useLatticeListKeyKey);
             // 最后找最优落子点
             if (findValue[aILatticeX] >= maxLattice[aILatticeX] || findValue[aILatticeY] <= maxLattice[aILatticeY]) {
                 if (findValue.lattice_init > maxLattice.lattice_init) {

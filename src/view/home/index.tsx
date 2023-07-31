@@ -147,6 +147,9 @@ class Home extends React.Component<{}, IHome> {
             gameStart: GAME_START,
             placingPieces: index === 0 ? -1 : myHitory[index - 1].id,
         });
+        if (index === 0) {
+            this.setState({ aiType: -1 });
+        }
         store.dispatch(setGameHitory(myHitory.slice(0, index)));
     };
 
@@ -155,7 +158,6 @@ class Home extends React.Component<{}, IHome> {
      */
     onSetGameType = () => {
         if (this.useTimeout !== null) {
-            console.log('nih');
             clearTimeout(this.useTimeout);
         }
         const useGameLayout = this.state.gameType === FIRST_TYPE ? FIRST_LOYOUT : SECOND_LOYOUT;
@@ -167,6 +169,7 @@ class Home extends React.Component<{}, IHome> {
                 chessboardY: useGameLayout,
                 gameMode,
             },
+            aiType: -1,
         });
         this.setState({ gameType: useGameMode });
     };

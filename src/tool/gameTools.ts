@@ -73,7 +73,7 @@ const useFindPath: IuseFindPath[] = [
  * @param chessboard 当前棋盘上所有点，以及当前选中的棋格
  * @param layout 棋盘布局
  * @param aiType ai棋手
- * */
+ */
 export const determineLattice = (chessboard: { placingPieces: ILattice, latticeList: ILattice[] }, layout: IChessboard, aiType:number) => {
     const {
         placingPieces,
@@ -110,8 +110,8 @@ export const determineLattice = (chessboard: { placingPieces: ILattice, latticeL
  * @param aiType // ai棋手
  */
 const aiSelect = (placingPieces: ILattice, gameMode: number, useLatticeList: Map<string, ILattice>, aiType:number) => {
-    const aILatticeX = placingPieces.value === aiType ? 'lattice_O' : 'lattice_X';
-    const aILatticeY = placingPieces.value === aiType ? 'lattice_X' : 'lattice_O';
+    const aILatticeX = aiType === LOCINPIECES_X ? 'lattice_X' : 'lattice_O';
+    const aILatticeY = aiType === LOCINPIECES_X ? 'lattice_O' : 'lattice_X';
     let maxLattice: IGameFindValue = {
         findValue: [],
         lattice_init: -1,
@@ -139,13 +139,13 @@ const aiSelect = (placingPieces: ILattice, gameMode: number, useLatticeList: Map
             const { findValue } = latticeSelectAll;
             for (let sI = 0; sI < findValue.findValue.length; sI++) {
                 // 优先找ai能够连线的点
-                if (findValue.findValue[sI][aILatticeY] === (gameMode - 1)) {
+                if (findValue.findValue[sI][aILatticeX] === (gameMode - 1)) {
                     maxLatticeY =  -1;
                     latticeSelectAll.currentPlId = useLatticeListKeyKey.id;
                     break latticeListOf;
                 }
                 // 其次找玩家能够连线的点
-                if (findValue.findValue[sI][aILatticeX] === (gameMode - 1)) {
+                if (findValue.findValue[sI][aILatticeY] === (gameMode - 1)) {
                     maxLatticeY = useLatticeListKeyKey.id;
                 }
             }
@@ -154,8 +154,10 @@ const aiSelect = (placingPieces: ILattice, gameMode: number, useLatticeList: Map
                 latticeSelectAll.currentPlId = useLatticeListKeyKey.id;
                 continue;
             }
+            console.log(findValue);
+            console.log(useLatticeListKeyKey);
             // 最后找最优落子点
-            if (findValue.lattice_X >= maxLattice.lattice_X || findValue.lattice_O >= maxLattice.lattice_O) {
+            if (findValue[aILatticeX] >= maxLattice[aILatticeX] || findValue[aILatticeY] <= maxLattice[aILatticeY]) {
                 if (findValue.lattice_init > maxLattice.lattice_init) {
                     maxLattice = findValue;
                     latticeSelectAll.currentPlId = useLatticeListKeyKey.id;
@@ -190,8 +192,11 @@ const selectLattic = (placingPieces: ILattice, gameMode: number, useLatticeList:
     const findValue: IFindValue[] = [];
     // 统计传入点位上八条边各棋子类型统计
     const lattice_count: {
+        // 统计所有未落子的点
         lattice_init: number;
+        // 统计所有O的点
         lattice_O: number;
+        // 统计所有X的点
         lattice_X: number;
     } = {
         lattice_init: 0,
@@ -288,11 +293,12 @@ export const aiGetMiddle = (latticeList: ILattice[]) => {
     return -1;
 };
 /**
- * 游戏类型 */
+ * 游戏类型
+ */
 export const gameType = () => [['黑', '白'], ['X', 'O']];
 /**
  * 优化查找，先去除小于游戏最小查找范围的点，再去除大于最大查找范围的点。
- * */
+ */
 const opDetermineLattice = (latticeList: ILattice[], gameMode: number, placingPieces: ILattice) => {
     const { lattice } = placingPieces;
     const latticeMap = new Map<string, ILattice>();
@@ -313,7 +319,8 @@ const opDetermineLattice = (latticeList: ILattice[], gameMode: number, placingPi
 };
 
 /**
- *自适应棋盘大小 */
+ *自适应棋盘大小
+ */
 export const setGameLayout = (value: number) => {
     let str = '';
     for (let strI = 0; strI < value; strI++) {
@@ -325,7 +332,7 @@ export const setGameLayout = (value: number) => {
 
 /**
  * 初始化棋盘状态，根据棋盘布局生成棋盘，并赋值棋格状态为0
- * */
+ */
 export const initChessboard = (lattice: IChessboard) => {
     const {
         chessboardX,

@@ -42,14 +42,13 @@ const {
     LOCINPIECES_O,
 } = EPlacingPieces;
 
-// 游戏基础接口
 interface IHome {
     // 棋盘
     chessboard: ILattice[];
     // 布局
     layout: IChessboard;
     // 游戏状态
-    gameStart: number;
+    gameState: number;
     // 游戏类型
     gameType: number;
     // 棋手
@@ -66,7 +65,6 @@ interface IHome {
 class Home extends React.Component<{}, IHome> {
     // ai落子过程
     useTimeout:any = null;
-    // 记录上一步附近附近同类型落子位置
     constructor (props: {}) {
         super(props);
         this.state = {
@@ -76,7 +74,7 @@ class Home extends React.Component<{}, IHome> {
                 chessboardY: FIRST_MODE,
                 gameMode: FIRST_MODE,
             },
-            gameStart: GAME_START,
+            gameState: GAME_START,
             gameType: SECOND_TYPE,
             placingPieces: -1,
             placingPiecesType: LOCINPIECES_X,
@@ -90,9 +88,9 @@ class Home extends React.Component<{}, IHome> {
      * @param usePlacingPieces 当前棋手
      */
     onLatticeClick = (value: number, usePlacingPieces:number) => {
-        const { chessboard, gameStart, placingPiecesType } = this.state;
+        const { chessboard, gameState, placingPiecesType } = this.state;
         if (chessboard[value].value !== LOCINPIECES_INIT ||
-            gameStart !== GAME_START) return;
+            gameState !== GAME_START) return;
         if (usePlacingPieces !== placingPiecesType) return;
         const useLatticeList = new Array(chessboard.length);
         const myHitory = store.getState().homeReducer.gameHitory;
@@ -144,7 +142,7 @@ class Home extends React.Component<{}, IHome> {
         this.setState({
             chessboard: useLatticeList,
             placingPiecesType: value.value,
-            gameStart: GAME_START,
+            gameState: GAME_START,
             placingPieces: index === 0 ? -1 : myHitory[index - 1].id,
         });
         if (index === 0) {
@@ -179,7 +177,7 @@ class Home extends React.Component<{}, IHome> {
      */
     initOrSwitch = (layout?: IChessboard) => {
         this.setState({
-            gameStart: GAME_START,
+            gameState: GAME_START,
             placingPiecesType: LOCINPIECES_X,
             placingPieces: GAME_INIT,
             chessboard: initChessboard(layout || this.state.layout),
@@ -216,7 +214,7 @@ class Home extends React.Component<{}, IHome> {
                 }
             }
             if (winner !== GAME_START) {
-                this.setState({ gameStart: winner });
+                this.setState({ gameState: winner });
                 return;
             }
             // ai落子
@@ -271,12 +269,12 @@ class Home extends React.Component<{}, IHome> {
 
     render () {
         const myHitory = store.getState().homeReducer.gameHitory;
-        const { placingPiecesType, gameType, gameStart, chessboard } = this.state;
+        const { placingPiecesType, gameType, gameState, chessboard } = this.state;
         return (
             <div className={'Home'}>
                 <header>
                     <GameTitle placingPieces={placingPiecesType} gameType={gameType}
-                        gameStart={gameStart}/>
+                        gameState={gameState}/>
                 </header>
                 <aside>
                     <GameType onSetGameType={this.onSetGameType}/>

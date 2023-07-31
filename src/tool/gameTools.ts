@@ -5,6 +5,12 @@ const {
     LOCINPIECES_O,
 } = EPlacingPieces;
 
+/**
+ * 落子后返回落子点附近的属性
+ * @param gameState 设置游戏状态是否结束游戏
+ * @param findValue 每条线的数据
+ * @param currentPlId 设置ai可以点击的点
+ */
 interface IGameState {
     // 设置游戏状态是否结束游戏
     gameState: boolean;
@@ -13,19 +19,30 @@ interface IGameState {
     // 设置ai可以点击的点
     currentPlId: number;
 }
-// 每条线的棋子统计数据
+/**
+ * 每条线的棋子统计数据
+ * @param findValue 棋盘每条线的数据
+ * @param lattice_init 落子点周围上未落子出现的统计
+ * @param lattice_X 落子点周围上X子出现的统计
+ * @param lattice_O 落子点周围上O子出现的统计
+ */
 interface IGameFindValue{
     // 棋盘每条线的数据
     findValue: IFindValue[];
-    // 单条线上X子出现的统计
-    lattice_init: number;
-    // 单条线上O子出现的统计
-    lattice_X: number;
     // 单条线上未落子出现的统计
+    lattice_init: number;
+    // 单条线上X子出现的统计
+    lattice_X: number;
+    // 单条线上O子出现的统计
     lattice_O: number;
 }
-
-// 棋子单条线周围各类型棋子统计
+/**
+ * 棋子单条线周围各类型棋子统计
+ * @param lattice 棋盘每条线的数据
+ * @param lattice_X 单条线上X子出现的统计
+ * @param lattice_O 单条线上O子出现的统计
+ * @param lattice_init 单条线上未落子出现的统计
+ */
 interface IFindValue {
     // 每个落子点上每条线的数据
     lattice: ILattice[];
@@ -36,8 +53,13 @@ interface IFindValue {
     // 单条线上未落子出现的统计
     lattice_init: number;
 }
-
-interface IuseFindPath {
+/**
+ * 游戏查询的8个角度
+ * @param id 下标
+ * @param value 落子后需要遍历线的角度
+ * @param type 向上遍历/向下遍历
+ */
+interface IUseFindPath {
     id: number;
     // 落子后需要遍历线的角度
     value: number[];
@@ -46,7 +68,7 @@ interface IuseFindPath {
 }
 
 // 定义查询的落子点的8条角度
-const useFindPath: IuseFindPath[] = [
+const useFindPath: IUseFindPath[] = [
     {
         id: 0,
         value: [-1, -1],
@@ -173,7 +195,7 @@ const aiSelect = (placingPieces: ILattice, gameMode: number, useLatticeList: Map
 };
 
 /**
- * 查询传入棋子周边最长gameMode上有多少条同类型线
+ * 查询传入棋子周边最长gameMode上有多少条同类型棋子
  * @param placingPieces //需要查找的点
  * @param gameMode //最长查找路线
  * @param useLatticeList //当前查找的棋盘

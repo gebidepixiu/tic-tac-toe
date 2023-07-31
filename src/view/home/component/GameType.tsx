@@ -1,7 +1,7 @@
 import React from 'react';
 /**
 * @description 游戏类型切换
-* */
+*/
 class GameType extends React.Component<{onSetGameType:Function}> {
     constructor (props:{onSetGameType:Function}) {
         super(props);

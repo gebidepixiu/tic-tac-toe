@@ -12,7 +12,7 @@ interface IGameLattice{
 }
 /**
  * @description 棋盘
- * */
+ */
 class GameLattice extends React.Component<IGameLattice> {
     constructor (props:IGameLattice) {
         super(props);
@@ -21,21 +21,21 @@ class GameLattice extends React.Component<IGameLattice> {
     /**
      * @description 设置棋子类型
      * @param value 棋子类型0/1
-     *  */
+     */
     setLattice = (value:number) => {
         if (value === EPlacingPieces.LOCINPIECES_INIT) return '';
         return this.latticeTYpe[this.props.gameType][value - 1];
     };
     /**
      * @description 设置棋子，判断胜负
-     * */
+     */
     onLatticeClick = () => {
         this.props.onLatticeClick(this.props.lattice.id);
     };
     /**
      * @description 设置棋子样式
      * @param value 棋子数据
-     *  */
+     */
     setClass = (value:ILattice) => {
         if (this.props.gameType === EGameType.FIRST_TYPE && value.value !== EPlacingPieces.LOCINPIECES_INIT) {
             return this.latticeTYpe[this.props.gameType][value.value - 1] === '黑' ? 'blackLattice' : 'whiteLattice';

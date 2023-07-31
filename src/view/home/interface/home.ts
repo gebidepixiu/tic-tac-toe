@@ -38,7 +38,7 @@ export const ELayout = {
 // 初始化数据
 export const GAME_INIT = -1;
 
-
+// 棋子属性
 export interface ILattice{
     id:number;
     // 棋子位置
@@ -46,13 +46,14 @@ export interface ILattice{
     // 棋子状态（0未落子，1/2落子人）
     value:number;
 }
+// 棋子位置
 export interface ICoordinate{
     // 棋子位置X轴
     latticeX:number;
     // 棋子位置Y轴
     latticeY:number;
 }
-
+// 棋盘布局
 export interface IChessboard{
     // 棋盘长度X轴
     chessboardX:number;

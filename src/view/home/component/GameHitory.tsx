@@ -11,7 +11,7 @@ interface IGameHitoryParams {
 
 /**
 * @description 游戏历史记录
-* */
+*/
 class GameHitory extends React.Component<IGameHitoryParams> {
     constructor (props:IGameHitoryParams) {
         super(props);
@@ -19,7 +19,7 @@ class GameHitory extends React.Component<IGameHitoryParams> {
 
     /**
     * @description 设置历史记录
-    * */
+    */
     onSetHitory = () => {
         this.props.setHitory(this.props.gameHitory, this.props.useIndex);
     };

@@ -2,7 +2,7 @@ import React from 'react';
 import GameTitle from './component/GameTitle';
 import GameHitory from './component/GameHitory';
 import '../../assets/css/home.css';
-import { aiGetMiddle, determineLattice, initChessboard, setGameLayout } from '../../tool/gameTools';
+import { determineLattice, initChessboard, setGameLayout } from '../../tool/gameTools';
 import GameLattice from './component/GameLattice';
 import GameType from './component/GameType';
 import {
@@ -42,6 +42,7 @@ const {
     LOCINPIECES_O,
 } = EPlacingPieces;
 
+// 游戏基础接口
 interface IHome {
     // 棋盘
     chessboard: ILattice[];
@@ -55,12 +56,16 @@ interface IHome {
     placingPiecesType: number;
     // 当前落子人
     placingPieces: number;
+    // 判断ai棋子
+    aiType:number;
 }
 
 /**
  * @description 五子棋游戏主入口
- **/
+ */
 class Home extends React.Component<{}, IHome> {
+    // ai落子过程
+    useTimeout:any = null;
     // 记录上一步附近附近同类型落子位置
     constructor (props: {}) {
         super(props);
@@ -75,20 +80,24 @@ class Home extends React.Component<{}, IHome> {
             gameType: SECOND_TYPE,
             placingPieces: -1,
             placingPiecesType: LOCINPIECES_X,
+            aiType: -1,
         };
     }
 
     /**
      * 设置历史记录，改变棋子样式
      * @param value 点击棋子的id/下标
-     **/
-    onLatticeClick = (value: number) => {
-        if (this.state.chessboard[value].value !== LOCINPIECES_INIT ||
-            this.state.gameStart !== GAME_START) return;
-        const useLatticeList = new Array(this.state.chessboard.length);
+     * @param usePlacingPieces 当前棋手
+     */
+    onLatticeClick = (value: number, usePlacingPieces:number) => {
+        const { chessboard, gameStart, placingPiecesType } = this.state;
+        if (chessboard[value].value !== LOCINPIECES_INIT ||
+            gameStart !== GAME_START) return;
+        if (usePlacingPieces !== placingPiecesType) return;
+        const useLatticeList = new Array(chessboard.length);
         const myHitory = store.getState().homeReducer.gameHitory;
         // 储存入历史记录
-        this.state.chessboard.forEach((value, index: number) => {
+        chessboard.forEach((value, index: number) => {
             useLatticeList[index] = {
                 id: value.id,
                 lattice: value.lattice,
@@ -96,24 +105,25 @@ class Home extends React.Component<{}, IHome> {
             };
         });
         const useChessboard = useLatticeList;
-
+        const nextPlType = placingPiecesType === LOCINPIECES_X
+            ? LOCINPIECES_O : LOCINPIECES_X;
         // 设置落子人
-        useChessboard[value].value = this.state.placingPiecesType;
+        useChessboard[value].value = placingPiecesType;
         // 设置历史记录
         store.dispatch(setGameHitory([...myHitory, useChessboard[value]]));
         // 修改下一步落子人
         this.setState({
             chessboard: useChessboard,
             placingPieces: useChessboard[value].id,
-            placingPiecesType: this.state.placingPiecesType === LOCINPIECES_X
-                ? LOCINPIECES_O : LOCINPIECES_X,
+            placingPiecesType: nextPlType,
         });
+        if (this.state.aiType === -1) this.setState({ aiType: nextPlType });
     };
     /**
      * 重置历史记录/回退游戏进程
      * @param value 需要重置到哪步的落子状态
      * @param index 需要重置到哪步的下标
-     **/
+     */
     setHitory = (value: ILattice, index: number) => {
         const myHitory = store.getState().homeReducer.gameHitory;
         const useHitory = myHitory.slice(index);
@@ -142,8 +152,12 @@ class Home extends React.Component<{}, IHome> {
 
     /**
      * @description 切换游戏类型
-     **/
+     */
     onSetGameType = () => {
+        if (this.useTimeout !== null) {
+            console.log('nih');
+            clearTimeout(this.useTimeout);
+        }
         const useGameLayout = this.state.gameType === FIRST_TYPE ? FIRST_LOYOUT : SECOND_LOYOUT;
         const useGameMode = this.state.gameType === FIRST_TYPE ? SECOND_TYPE : FIRST_TYPE;
         const gameMode = this.state.layout.gameMode === SECOND_MODE ? FIRST_MODE : SECOND_MODE;
@@ -159,7 +173,7 @@ class Home extends React.Component<{}, IHome> {
 
     /**
      * @description 初始化或者切换游戏
-     **/
+     */
     initOrSwitch = (layout?: IChessboard) => {
         this.setState({
             gameStart: GAME_START,
@@ -172,12 +186,14 @@ class Home extends React.Component<{}, IHome> {
 
     /**
      * @description 判断胜负
-     **/
+     */
     fallingChess = (newState: IHome) => {
         const {
             chessboard,
             layout,
             placingPieces,
+            placingPiecesType,
+            aiType,
         } = newState;
         const { gameHitory } = store.getState().homeReducer;
         if (placingPieces !== GAME_INIT) {
@@ -186,7 +202,7 @@ class Home extends React.Component<{}, IHome> {
             const gameState = determineLattice({
                 latticeList: chessboard,
                 placingPieces: chessboard[placingPieces],
-            }, layout);
+            }, layout, aiType);
             if (gameState.gameState) {
                 winner = chessboard[placingPieces].value;
             } else {
@@ -201,22 +217,38 @@ class Home extends React.Component<{}, IHome> {
                 return;
             }
             // ai落子
-            if (chessboard[placingPieces].value === LOCINPIECES_X && gameState.currentPlId !== -1) {
-                setTimeout(() => {
-                    this.onLatticeClick(gameState.currentPlId);
+            if (placingPiecesType === aiType && gameState.currentPlId !== -1) {
+                this.useTimeout = setTimeout(() => {
+                    this.onLatticeClick(gameState.currentPlId, this.state.aiType);
                 }, 1000);
             }
         }
     };
     /**
-     * @description AI先手
-     **/
+     * AI先手
+     */
     onAIStart = () => {
-        const aiStart = aiGetMiddle(this.state.chessboard);
-        if (aiStart < 0) return;
-        this.setState({ placingPiecesType: LOCINPIECES_O }, () => {
-            this.onLatticeClick(aiStart);
-        });
+        let placingPieces = -1;
+        if (this.state.aiType === -1) {
+            placingPieces = 0;
+            this.setState({ aiType: this.state.placingPiecesType }, () => {
+                this.onLatticeClick(placingPieces, this.state.placingPiecesType);
+            });
+        }
+    };
+    /**
+     * 棋手落子
+     * @param value 落子的点位
+     */
+    onPlClick = (value: number) => {
+        let usePlacingPiecesType;
+        const { aiType, placingPiecesType } = this.state;
+        if (aiType === -1) {
+            usePlacingPiecesType =  placingPiecesType;
+        } else {
+            usePlacingPiecesType = aiType === LOCINPIECES_X ? LOCINPIECES_O : LOCINPIECES_X;
+        }
+        this.onLatticeClick(value, usePlacingPiecesType);
     };
     // 初始化
     componentDidMount () {
@@ -236,11 +268,12 @@ class Home extends React.Component<{}, IHome> {
 
     render () {
         const myHitory = store.getState().homeReducer.gameHitory;
+        const { placingPiecesType, gameType, gameStart, chessboard } = this.state;
         return (
             <div className={'Home'}>
                 <header>
-                    <GameTitle placingPieces={this.state.placingPiecesType} gameType={this.state.gameType}
-                        gameStart={this.state.gameStart}/>
+                    <GameTitle placingPieces={placingPiecesType} gameType={gameType}
+                        gameStart={gameStart}/>
                 </header>
                 <aside>
                     <GameType onSetGameType={this.onSetGameType}/>
@@ -249,13 +282,13 @@ class Home extends React.Component<{}, IHome> {
                 <main>
                     <ul className={'gameList'}
                         style={{ gridTemplateColumns: setGameLayout(this.state.layout.chessboardX) }}>
-                        {this.state.chessboard.map((value: ILattice) => {
+                        {chessboard.map((value: ILattice) => {
                             return (
                                 <GameLattice
                                     key={value.id}
                                     lattice={value}
-                                    gameType={this.state.gameType}
-                                    onLatticeClick={this.onLatticeClick}
+                                    gameType={gameType}
+                                    onLatticeClick={this.onPlClick}
                                 />
                             );
                         })}

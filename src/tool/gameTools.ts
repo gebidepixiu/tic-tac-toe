@@ -176,7 +176,11 @@ const aiSelect = (placingPieces: ILattice, gameMode: number, useLatticeList: Map
                 latticeSelectAll.currentPlId = useLatticeListKeyKey.id;
                 continue;
             }
-            // 最后找最优落子点
+            /**
+             * 最后通过统计找出最优的落子点，先找已经落子的点位统计，拿到同类型最多的点
+             * 如果另一个点有一样多的黑白子，就比较周边空位，空位多的就是最优点
+             * 如果空位一样的话就比较谁黑白子，找出统计棋子最少的点
+             */
             if (findValue[aILatticeX] >= maxLattice[aILatticeX] || findValue[aILatticeY] <= maxLattice[aILatticeY]) {
                 if (findValue.lattice_init > maxLattice.lattice_init) {
                     maxLattice = findValue;
@@ -281,7 +285,7 @@ const selectLattic = (placingPieces: ILattice, gameMode: number, useLatticeList:
         // 获取棋盘8个方向未落子的点减去已经落子的点，获取八条边上有更多空位的点位
         findValue[findPosition].lattice_init = findValue[findPosition].lattice_init - (findValue[findPosition].lattice_O + findValue[findPosition].lattice_X);
         lattice_count.lattice_init += findValue[findPosition].lattice_init;
-        // 每条8条边上共有x，o子多少个
+        // 每个棋子8条边上总共有x，o子多少个
         lattice_count.lattice_O += findValue[findPosition].lattice_O;
         lattice_count.lattice_X += findValue[findPosition].lattice_X;
         // 判断本条线上是否有该游戏最大棋子

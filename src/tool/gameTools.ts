@@ -20,15 +20,12 @@ interface IGameState {
     currentPlId: number;
 }
 /**
- * 每条线的棋子统计数据
- * @param findValue 棋盘每条线的数据
+ * 点落子点连接线棋子类型统计
  * @param lattice_init 落子点周围上未落子出现的统计
  * @param lattice_X 落子点周围上X子出现的统计
  * @param lattice_O 落子点周围上O子出现的统计
  */
-interface IGameFindValue{
-    // 棋盘每条线的数据
-    findValue: IFindValue[];
+interface ILatticeCount {
     // 单条线上未落子出现的统计
     lattice_init: number;
     // 单条线上X子出现的统计
@@ -37,21 +34,27 @@ interface IGameFindValue{
     lattice_O: number;
 }
 /**
+ * 每条线的棋子统计数据
+ * @param findValue 棋盘每条线的数据
+ * @param lattice_init 落子点周围上未落子出现的统计
+ * @param lattice_X 落子点周围上X子出现的统计
+ * @param lattice_O 落子点周围上O子出现的统计
+ */
+interface IGameFindValue extends ILatticeCount{
+    // 棋盘每条线的数据
+    findValue: IFindValue[];
+}
+
+/**
  * 棋子单条线周围各类型棋子统计
  * @param lattice 棋盘每条线的数据
  * @param lattice_X 单条线上X子出现的统计
  * @param lattice_O 单条线上O子出现的统计
  * @param lattice_init 单条线上未落子出现的统计
  */
-interface IFindValue {
+interface IFindValue extends ILatticeCount{
     // 每个落子点上每条线的数据
     lattice: ILattice[];
-    // 单条线上X子出现的统计
-    lattice_X: number;
-    // 单条线上O子出现的统计
-    lattice_O: number;
-    // 单条线上未落子出现的统计
-    lattice_init: number;
 }
 /**
  * 游戏查询的8个角度
@@ -210,14 +213,7 @@ const selectLattic = (placingPieces: ILattice, gameMode: number, useLatticeList:
     // 存储每条线上的相同棋子各有多少
     const findValue: IFindValue[] = [];
     // 统计传入点位上八条边各棋子类型统计
-    const lattice_count: {
-        // 统计所有未落子的点
-        lattice_init: number;
-        // 统计所有O的点
-        lattice_O: number;
-        // 统计所有X的点
-        lattice_X: number;
-    } = {
+    const lattice_count: ILatticeCount = {
         lattice_init: 0,
         lattice_O: 0,
         lattice_X: 0,

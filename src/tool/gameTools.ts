@@ -181,18 +181,10 @@ const aiSelect = (placingPieces: ILattice, gameMode: number, useLatticeList: Map
              * 如果另一个点有一样多的黑白子，就比较周边空位，空位多的就是最优点
              * 如果空位一样的话就比较谁黑白子，找出统计棋子最少的点
              */
-            if (findValue[aILatticeX] > maxLattice[aILatticeX] || findValue[aILatticeY] < maxLattice[aILatticeY]) {
-                maxLattice = findValue;
-                latticeSelectAll.currentPlId = useLatticeListKeyKey.id;
-            } else if (findValue[aILatticeX] === maxLattice[aILatticeX] || findValue[aILatticeY] === maxLattice[aILatticeY]) {
+            if (findValue[aILatticeX] >= maxLattice[aILatticeX] && findValue[aILatticeY] <= maxLattice[aILatticeY]) {
                 if (findValue.lattice_init < maxLattice.lattice_init) {
                     maxLattice = findValue;
                     latticeSelectAll.currentPlId = useLatticeListKeyKey.id;
-                } else if (findValue.lattice_init === maxLattice.lattice_init) {
-                    if (findValue.lattice_X <= maxLattice.lattice_X || findValue.lattice_O <= maxLattice.lattice_O) {
-                        maxLattice = findValue;
-                        latticeSelectAll.currentPlId = useLatticeListKeyKey.id;
-                    }
                 }
             }
         }

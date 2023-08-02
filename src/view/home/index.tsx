@@ -229,17 +229,21 @@ class Home extends React.Component<{}, IHome> {
     onAIStart = (value?:number) => {
         let placingPieces = -1;
         const { chessboard, layout, placingPiecesType } = this.state;
+        const { gameHitory } = store.getState().homeReducer;
         if (typeof value !== 'undefined' && chessboard[value].value === 0) {
             placingPieces = value;
         } else  {
             const useLattice = aiSelect(layout.gameMode, chessboard, placingPiecesType);
             placingPieces = useLattice.currentPlId;
         }
-        this.setState({ startAI: true }, () => {
-            this.useTimeout = setTimeout(() => {
-                this.onLatticeClick(placingPieces);
-            }, 1000);
-        });
+        const draw = gameHitory.length !== layout.chessboardX * layout.chessboardY;
+        if (draw) {
+            this.setState({ startAI: true }, () => {
+                this.useTimeout = setTimeout(() => {
+                    this.onLatticeClick(placingPieces);
+                }, 1000);
+            });
+        }
     };
     /**
      * 点击落子--根据是否使用ai限制用户点击操作

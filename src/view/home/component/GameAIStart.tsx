@@ -1,22 +1,22 @@
 import React from 'react';
 /**
- * @description AI开始游戏
+ * @description 点击进行AI落子
  */
 class GameAIStart extends React.Component<{onAIStart:Function}> {
     constructor (props:{onAIStart:Function}) {
         super(props);
     }
     /**
-     * @description AI先下
+     * @description AI落子优先落角
      */
     onAIStart = () => {
-        this.props.onAIStart();
+        this.props.onAIStart(0);
     };
     render () {
         return (
             <>
                 <button onClick={this.onAIStart}>
-                    AI先手
+                    AI落子
                 </button>
             </>
         );

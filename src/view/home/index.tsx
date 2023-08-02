@@ -2,12 +2,13 @@ import React from 'react';
 import GameTitle from './component/GameTitle';
 import GameHitory from './component/GameHitory';
 import '../../assets/css/home.css';
-import { determineLattice, initChessboard, setGameLayout } from '../../tool/gameTools';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { aiGetMiddle, aiSelect, determineLattice, initChessboard, setGameLayout } from '../../tool/gameTools';
 import GameLattice from './component/GameLattice';
 import GameType from './component/GameType';
+import GameAIStart from './component/GameAIStart';
 import {
     EGameMode,
-    EGameStart,
     EGameType,
     ELayout,
     EPlacingPieces,
@@ -18,7 +19,7 @@ import {
 
 import store from '../../store/store';
 import { setGameHitory } from '../../store/homeReducer';
-import GameAIStart from './component/GameAIStart';
+// import GameAIStart from './component/GameAIStart';
 
 const {
     FIRST_LOYOUT,
@@ -28,10 +29,6 @@ const {
     FIRST_MODE,
     SECOND_MODE,
 } = EGameMode;
-const {
-    GAME_DRAW,
-    GAME_START,
-} = EGameStart;
 const {
     FIRST_TYPE,
     SECOND_TYPE,
@@ -43,28 +40,27 @@ const {
 } = EPlacingPieces;
 
 interface IHome {
-    // 棋盘
+    // 棋盘--储存棋子下标，坐标，当前落子类型
     chessboard: ILattice[];
-    // 布局
+    // 布局--棋盘长度和宽度以及游戏胜利需要的连子
     layout: IChessboard;
-    // 游戏状态
-    gameState: number;
-    // 游戏类型
+    // 游戏状态false为游戏结束true为开始游戏
+    gameState: boolean;
+    // 游戏类型0为3子棋1为5子棋
     gameType: number;
-    // 棋手
+    // 棋手类型1/2
     placingPiecesType: number;
-    // 当前落子人
-    placingPieces: number;
-    // 判断ai棋子
-    aiType:number;
+    // 判断是否开启ai true为开启
+    startAI: boolean;
 }
 
 /**
  * @description 五子棋游戏主入口
  */
 class Home extends React.Component<{}, IHome> {
-    // ai落子过程
-    useTimeout:any = null;
+    // 存储ai落子定时器
+    useTimeout: any = null;
+
     constructor (props: {}) {
         super(props);
         this.state = {
@@ -74,207 +70,206 @@ class Home extends React.Component<{}, IHome> {
                 chessboardY: FIRST_MODE,
                 gameMode: FIRST_MODE,
             },
-            gameState: GAME_START,
+            gameState: true,
             gameType: SECOND_TYPE,
-            placingPieces: -1,
             placingPiecesType: LOCINPIECES_X,
-            aiType: -1,
+            startAI: false,
         };
     }
 
     /**
-     * 设置历史记录，改变棋子样式
+     * 根据传入value(棋格下标)先判断游戏是否结束/棋格是否已经落子，
+     * 再设置落子人并添加历史记录，最后进行胜利判断
      * @param value 点击棋子的id/下标
-     * @param usePlacingPieces 当前棋手
      */
-    onLatticeClick = (value: number, usePlacingPieces:number) => {
-        const { chessboard, gameState, placingPiecesType } = this.state;
-        if (chessboard[value].value !== LOCINPIECES_INIT ||
-            gameState !== GAME_START) return;
-        if (usePlacingPieces !== placingPiecesType) return;
-        const useLatticeList = new Array(chessboard.length);
+    onLatticeClick = (value: number) => {
+        const {
+            chessboard,
+            gameState,
+            placingPiecesType,
+            startAI,
+        } = this.state;
+        if (chessboard[value].value !== LOCINPIECES_INIT || !gameState) return;
+        const useLatticeList = chessboard.slice();
         const myHitory = store.getState().homeReducer.gameHitory;
-        // 储存入历史记录
-        chessboard.forEach((value, index: number) => {
-            useLatticeList[index] = {
-                id: value.id,
-                lattice: value.lattice,
-                value: value.value,
-            };
-        });
-        const useChessboard = useLatticeList;
+        // 设置落子人
+        useLatticeList[value] = {
+            ...useLatticeList[value],
+            value: placingPiecesType,
+            id: chessboard[value].id,
+        };
+        // 设置历史记录
+        const gameHitory = [...myHitory, {
+            latticeHitory: useLatticeList[value],
+            startAI,
+        }];
+        // 设置历史记录
+        store.dispatch(setGameHitory(gameHitory));
+
         const nextPlType = placingPiecesType === LOCINPIECES_X
             ? LOCINPIECES_O : LOCINPIECES_X;
-        // 设置落子人
-        useChessboard[value].value = placingPiecesType;
-        // 设置历史记录
-        store.dispatch(setGameHitory([...myHitory, useChessboard[value]]));
         // 修改下一步落子人
         this.setState({
-            chessboard: useChessboard,
-            placingPieces: useChessboard[value].id,
+            chessboard: useLatticeList,
             placingPiecesType: nextPlType,
+            startAI: !startAI,
+        }, () => {
+            this.fallingChess(this.state);
         });
-        if (this.state.aiType === -1) this.setState({ aiType: nextPlType });
     };
     /**
-     * 重置历史记录/回退游戏进程
+     * 回退历史记录--传入index需要回退到哪步的下标
+     * 循环棋盘和历史记录列表，查询相同id的棋格，还原该棋格落子状态
+     * 判断回退的步骤是否使用ai
      * @param value 需要重置到哪步的落子状态
      * @param index 需要重置到哪步的下标
      */
     setHitory = (value: ILattice, index: number) => {
         const myHitory = store.getState().homeReducer.gameHitory;
         const useHitory = myHitory.slice(index);
+        const { chessboard } = this.state;
         const useLatticeList = [];
-        forLatticeList:for (let latticeI = 0; latticeI < this.state.chessboard.length; latticeI++) {
+        forLatticeList:for (let latticeI = 0; latticeI < chessboard.length; latticeI++) {
             for (let hitoryI = 0; hitoryI < useHitory.length; hitoryI++) {
-                if (useHitory[hitoryI].id === this.state.chessboard[latticeI].id) {
+                if (chessboard[latticeI].id === useHitory[hitoryI].latticeHitory.id) {
                     useLatticeList.push({
-                        ...useHitory[hitoryI],
+                        ...useHitory[hitoryI].latticeHitory,
                         value: LOCINPIECES_INIT,
+                        id: chessboard[latticeI].id,
                     });
                     continue forLatticeList;
                 }
             }
-            useLatticeList.push(this.state.chessboard[latticeI]);
+            useLatticeList.push(chessboard[latticeI]);
         }
+        store.dispatch(setGameHitory(myHitory.slice(0, index)));
+
         // 回退历史记录
         this.setState({
             chessboard: useLatticeList,
             placingPiecesType: value.value,
-            gameState: GAME_START,
-            placingPieces: index === 0 ? -1 : myHitory[index - 1].id,
+            gameState: true,
+            startAI: myHitory[index].startAI,
+        }, () => {
+            if (myHitory[index].startAI) {
+                if (index === 0) {
+                    this.onAIStart(0);
+                } else {
+                    this.onAIStart();
+                }
+            }
         });
-        if (index === 0) {
-            this.setState({ aiType: -1 });
-        }
-        store.dispatch(setGameHitory(myHitory.slice(0, index)));
     };
 
     /**
-     * @description 切换游戏类型
+     * 切换游戏类型，去除ai落子过程，更改游戏类型，调用initOrSwitch重新生成棋盘大小
      */
     onSetGameType = () => {
         if (this.useTimeout !== null) {
             clearTimeout(this.useTimeout);
         }
-        const useGameLayout = this.state.gameType === FIRST_TYPE ? FIRST_LOYOUT : SECOND_LOYOUT;
-        const useGameMode = this.state.gameType === FIRST_TYPE ? SECOND_TYPE : FIRST_TYPE;
-        const gameMode = this.state.layout.gameMode === SECOND_MODE ? FIRST_MODE : SECOND_MODE;
+        const {
+            gameType,
+            layout,
+        } = this.state;
+        const useGameLayout = gameType === FIRST_TYPE ? FIRST_LOYOUT : SECOND_LOYOUT;
+        const useGameMode = gameType === FIRST_TYPE ? SECOND_TYPE : FIRST_TYPE;
+        const gameMode = layout.gameMode === SECOND_MODE ? FIRST_MODE : SECOND_MODE;
         this.setState({
             layout: {
                 chessboardX: useGameLayout,
                 chessboardY: useGameLayout,
                 gameMode,
             },
-            aiType: -1,
+            startAI: false,
+            gameType: useGameMode,
+        }, () => {
+            this.initOrSwitch();
         });
-        this.setState({ gameType: useGameMode });
     };
 
     /**
-     * @description 初始化或者切换游戏
+     * 初始化或者切换游戏时，用于初始化数据
      */
-    initOrSwitch = (layout?: IChessboard) => {
+    initOrSwitch = () => {
         this.setState({
-            gameState: GAME_START,
+            gameState: true,
             placingPiecesType: LOCINPIECES_X,
-            placingPieces: GAME_INIT,
-            chessboard: initChessboard(layout || this.state.layout),
+            chessboard: initChessboard(this.state.layout || this.state.layout),
         });
         store.dispatch(setGameHitory([]));
     };
 
     /**
-     * @description 判断胜负
+     * 落子后判断游戏胜负--获取最新的state根据determineLattice返回值判断是否有人胜出
+     * 无人胜出则判断下一步是否需要ai查询
      */
-    fallingChess = (newState: IHome) => {
-        const {
-            chessboard,
-            layout,
-            placingPieces,
-            placingPiecesType,
-            aiType,
-        } = newState;
+    fallingChess = (state:IHome) => {
+        const { chessboard, layout, startAI } = state;
         const { gameHitory } = store.getState().homeReducer;
-        if (placingPieces !== GAME_INIT) {
-            let winner;
+        const placingPieces = gameHitory[gameHitory.length - 1];
+        if (placingPieces && placingPieces.latticeHitory.id !== GAME_INIT) {
             // 判断是否有人胜出
             const gameState = determineLattice({
                 latticeList: chessboard,
-                placingPieces: chessboard[placingPieces],
-            }, layout, aiType);
+                placingPieces: chessboard[placingPieces.latticeHitory.id],
+            }, layout);
             if (gameState.gameState) {
-                winner = chessboard[placingPieces].value;
-            } else {
-                winner = GAME_DRAW;
-                // 判断游戏是否平局
-                if (gameHitory.length !== chessboard.length) {
-                    winner = GAME_START;
-                }
-            }
-            if (winner !== GAME_START) {
-                this.setState({ gameState: winner });
+                this.setState({ gameState: false });
                 return;
             }
-            // ai落子
-            if (placingPiecesType === aiType && gameState.currentPlId !== -1) {
-                this.useTimeout = setTimeout(() => {
-                    this.onLatticeClick(gameState.currentPlId, this.state.aiType);
-                }, 1000);
-            }
+            const draw = gameHitory.length !== layout.chessboardX * layout.chessboardY;
+            if (startAI && draw) this.onAIStart();
         }
     };
     /**
-     * AI先手
+     * AI落子--ai先手占边，后手使用aiSelect查找最优落子点，并在延迟后落子
+     * @param value ai先手的点
      */
-    onAIStart = () => {
+    onAIStart = (value?:number) => {
         let placingPieces = -1;
-        if (this.state.aiType === -1) {
-            placingPieces = 0;
-            this.setState({ aiType: this.state.placingPiecesType }, () => {
-                this.onLatticeClick(placingPieces, this.state.placingPiecesType);
-            });
+        const { chessboard, layout, placingPiecesType } = this.state;
+        if (typeof value !== 'undefined' && chessboard[value].value === 0) {
+            placingPieces = value;
+        } else  {
+            const useLattice = aiSelect(layout.gameMode, chessboard, placingPiecesType);
+            placingPieces = useLattice.currentPlId;
         }
+        this.setState({ startAI: true }, () => {
+            this.useTimeout = setTimeout(() => {
+                this.onLatticeClick(placingPieces);
+            }, 1000);
+        });
     };
     /**
-     * 棋手落子
+     * 点击落子--根据是否使用ai限制用户点击操作
      * @param value 落子的点位
      */
     onPlClick = (value: number) => {
-        let usePlacingPiecesType;
-        const { aiType, placingPiecesType } = this.state;
-        if (aiType === -1) {
-            usePlacingPiecesType =  placingPiecesType;
-        } else {
-            usePlacingPiecesType = aiType === LOCINPIECES_X ? LOCINPIECES_O : LOCINPIECES_X;
+        if (!this.state.startAI) {
+            this.onLatticeClick(value);
         }
-        this.onLatticeClick(value, usePlacingPiecesType);
     };
+
     // 初始化
     componentDidMount () {
         this.initOrSwitch();
     }
 
-    // 更新状态
-    shouldComponentUpdate (nextProps: unknown, nextStates: IHome) {
-        if (nextStates.layout.chessboardX !== this.state.layout.chessboardX) {
-            this.initOrSwitch(nextStates.layout);
-        }
-        if (nextStates.placingPieces !== this.state.placingPieces) {
-            this.fallingChess(nextStates);
-        }
-        return true;
-    }
-
     render () {
         const myHitory = store.getState().homeReducer.gameHitory;
-        const { placingPiecesType, gameType, gameState, chessboard } = this.state;
+        const {
+            placingPiecesType,
+            gameType,
+            gameState,
+            chessboard,
+            layout,
+        } = this.state;
         return (
             <div className={'Home'}>
                 <header>
                     <GameTitle placingPieces={placingPiecesType} gameType={gameType}
-                        gameState={gameState}/>
+                        gameState={gameState} layout={layout}/>
                 </header>
                 <aside>
                     <GameType onSetGameType={this.onSetGameType}/>
@@ -300,9 +295,9 @@ class Home extends React.Component<{}, IHome> {
                         myHitory.map((value, index: number) => {
                             return (
                                 <GameHitory
-                                    key={value.id}
+                                    key={value.latticeHitory.id}
                                     useIndex={index}
-                                    gameHitory={value}
+                                    gameHitory={value.latticeHitory}
                                     setHitory={this.setHitory}
                                 />
                             );

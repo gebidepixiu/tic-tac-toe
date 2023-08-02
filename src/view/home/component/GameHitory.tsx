@@ -1,7 +1,7 @@
 import React from 'react';
 import { ILattice } from '../interface/home';
 interface IGameHitoryParams {
-    // 设置历史记录
+    // 用于设置历史记录
     setHitory: Function;
     // 历史记录
     gameHitory: ILattice;

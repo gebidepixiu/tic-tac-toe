@@ -3,6 +3,7 @@ import { IChessboard, ILattice, EPlacingPieces } from '../view/home/interface/ho
 const {
     LOCINPIECES_X,
     LOCINPIECES_O,
+    LOCINPIECES_INIT,
 } = EPlacingPieces;
 
 /**
@@ -59,12 +60,12 @@ interface IFindValue extends ILatticeCount{
 /**
  * 游戏查询的8个角度
  * @param id 下标
- * @param value 落子后需要遍历线的角度
+ * @param value 落子后需要遍历线的角度，通过加减进行延申查询
  * @param type 向上遍历/向下遍历
  */
 interface IUseFindPath {
     id: number;
-    // 落子后需要遍历线的角度
+    // 落子后需要遍历线的角度，通过加减进行延申查询
     value: number[];
     // 向上遍历/向下遍历
     type: boolean;
@@ -94,12 +95,11 @@ const useFindPath: IUseFindPath[] = [
     },
 ];
 /**
- * 判断游戏是否结束
+ * 判断游戏是否有人胜出
  * @param chessboard 当前棋盘上所有点，以及当前选中的棋格
  * @param layout 棋盘布局
- * @param aiType ai棋手
  */
-export const determineLattice = (chessboard: { placingPieces: ILattice, latticeList: ILattice[] }, layout: IChessboard, aiType:number) => {
+export const determineLattice = (chessboard: { placingPieces: ILattice, latticeList: ILattice[] }, layout: IChessboard) => {
     const {
         placingPieces,
         latticeList,
@@ -114,90 +114,110 @@ export const determineLattice = (chessboard: { placingPieces: ILattice, latticeL
     const useLatticeList = opDetermineLattice(latticeList, gameMode, placingPieces);
     // 是否胜利判断
     gameState = selectLattic(placingPieces, gameMode, useLatticeList, gameState);
-    if (gameState.gameState) return gameState;
-    if (placingPieces.value !== aiType) {
-        const useCurrentPlId = aiGetMiddle(latticeList);
-        if (useCurrentPlId !== -1) {
-            gameState.currentPlId = useCurrentPlId;
-        } else {
-            gameState.currentPlId = aiSelect(placingPieces, gameMode, useLatticeList, aiType).currentPlId;
-        }
-        gameState.gameState = false;
-    }
     return gameState;
 };
 
 /**
- * ai判断落子
- * @param placingPieces // 当前落子
+ * ai查询最优点位--循环useLatticeList查找未落子的点位，优先找当前使用ai的棋手是否差一个子胜利
+ * 其次查询下一个棋手是否差一个子胜利，之后统计双方4条边上拟落子后下一步可以胜利的点，取出最优点位
+ * 之后判断当前ai和下一步落子人中是否多个最优点位，如果当前ai有就直接落子，如果下一个落子人有多个最优点位，
+ * 则进行拦截，直接找当前ai下一步可以连线的点并落子
+ * 以上步骤代码由上至下，最优落子点的判断为由下至上覆盖
  * @param gameMode // 棋盘游戏最大连接数量
- * @param useLatticeList // 棋盘信息
- * @param aiType // ai棋手
+ * @param latticeList // 棋盘信息
+ * @param placingPiecesType // 当前落子人
  */
-const aiSelect = (placingPieces: ILattice, gameMode: number, useLatticeList: Map<string, ILattice>, aiType:number) => {
-    const aILatticeX = aiType === LOCINPIECES_X ? 'lattice_X' : 'lattice_O';
-    const aILatticeY = aiType === LOCINPIECES_X ? 'lattice_O' : 'lattice_X';
-    let maxLattice: IGameFindValue = {
-        findValue: [],
-        lattice_init: -1,
-        lattice_X: -1,
-        lattice_O: -1,
-    };
+export const aiSelect = (gameMode: number, latticeList: ILattice[], placingPiecesType:number) => {
+    const aILatticeX = placingPiecesType === LOCINPIECES_X ? 'lattice_X' : 'lattice_O';
+    const aILatticeY = placingPiecesType === LOCINPIECES_X ? 'lattice_O' : 'lattice_X';
+    const useLatticeList = opDetermineLattice(latticeList, gameMode);
     // 获取棋盘每个子之间黑白子个数
-    const gameState: IGameState = {
-        // 设置游戏状态是否结束游戏
-        gameState: false,
-        // 设置ai可以点击的点
-        currentPlId: -1,
+    const gameState: IGameState = { gameState: false, currentPlId: -1 };
+    let latticeSelectAll: IGameState = { gameState: false, currentPlId: -1 };
+    let maxLattice = -1;
+    const count:any = [];
+    const { maxAi, maxPlays }:any = {
+        maxAi: [],
+        maxPlays: [],
     };
-    let latticeSelectAll: IGameState = {
-        gameState: false,
-        // 设置ai可以点击的点
-        currentPlId: -1,
-    };
-    let maxLatticeY = -1;
-    // 循环棋盘
-    latticeListOf:for (const useLatticeListKeyKey of useLatticeList.values()) {
-        if (useLatticeListKeyKey.value !== 0) continue;
-        latticeSelectAll = selectLattic(useLatticeListKeyKey, gameMode, useLatticeList, gameState);
+    let maxVictory = 0;
+    // 循环棋盘查询棋盘所有未落子的点位
+    latticeListOf:for (const useLatticeListKey of useLatticeList.values()) {
+        if (useLatticeListKey.value !== 0) continue;
+        latticeSelectAll = selectLattic(useLatticeListKey, gameMode, useLatticeList, gameState);
+        maxVictory = 0;
         if (typeof latticeSelectAll.findValue?.findValue !== 'undefined') {
             const { findValue } = latticeSelectAll;
             for (let sI = 0; sI < findValue.findValue.length; sI++) {
-                // 优先找ai能够连线的点
+                // 优先找当前使用ai的棋手是否差一个子胜利
                 if (findValue.findValue[sI][aILatticeX] === (gameMode - 1)) {
-                    maxLatticeY =  -1;
-                    latticeSelectAll.currentPlId = useLatticeListKeyKey.id;
+                    maxLattice = useLatticeListKey.id;
                     break latticeListOf;
                 }
-                // 其次找玩家能够连线的点
+                // 其次查询下一个棋手是否差一个子胜利
                 if (findValue.findValue[sI][aILatticeY] === (gameMode - 1)) {
-                    maxLatticeY = useLatticeListKeyKey.id;
+                    maxLattice = useLatticeListKey.id;
                 }
             }
-            if (maxLattice.findValue.length === 0) {
-                maxLattice = findValue;
-                latticeSelectAll.currentPlId = useLatticeListKeyKey.id;
-                continue;
+            // 储存未落子点位上ai拟落子后有一条胜利机会的点位
+            if (findValue[aILatticeX] > 0) maxVictory++;
+            // 储存未落子点位上ai拟落子后有多条胜利机会的点位
+            if (findValue[aILatticeX] > 1) {
+                maxVictory++;
+                maxAi.push(useLatticeListKey.id);
             }
-            /**
-             * 最后通过统计找出最优的落子点，先找已经落子的点位统计，拿到同类型最多的点
-             * 如果另一个点有一样多的黑白子，就比较周边空位，空位多的就是最优点
-             * 如果空位一样的话就比较谁黑白子，找出统计棋子最少的点
-             */
-            if (findValue[aILatticeX] >= maxLattice[aILatticeX] && findValue[aILatticeY] <= maxLattice[aILatticeY]) {
-                if (findValue.lattice_init < maxLattice.lattice_init) {
-                    maxLattice = findValue;
-                    latticeSelectAll.currentPlId = useLatticeListKeyKey.id;
-                }
+
+            // 储存未落子点位上一个落子人拟落子后有一条胜利机会的点位
+            if (findValue[aILatticeY] > 0) maxVictory++;
+            // 储存未落子点位上一个落子人拟落子后有多条胜利机会的点位
+            if (findValue[aILatticeY] > 1) {
+                maxVictory++;
+                maxPlays.push(useLatticeListKey.id);
+            }
+            count.push({
+                maxVictory,
+                lattice: useLatticeListKey,
+                findValue,
+            });
+        }
+    }
+    // 判断存储最优点位
+    let bestVictory:any = { maxVictory: -1 };
+    for (let mI = 0; mI < count.length; mI++) {
+        if (count[mI].maxVictory > bestVictory.maxVictory) {
+            bestVictory = count[mI];
+        } else if (count[mI].maxVictory === bestVictory.maxVictory) {
+            if (count[mI].findValue.lattice_init > bestVictory.findValue.lattice_init) {
+                bestVictory = count[mI];
             }
         }
     }
-    if (maxLatticeY !== -1)latticeSelectAll.currentPlId = maxLatticeY;
+    // 如果查询上一个落子人拟落子点上的线路有多个最优点位，就避开
+    if (maxPlays.length > 1) {
+        for (const useLatticeListKey of useLatticeList.values()) {
+            if (!maxPlays.includes(useLatticeListKey.id) && useLatticeListKey.value === LOCINPIECES_INIT) {
+                bestVictory.lattice = useLatticeListKey;
+                break;
+            }
+        }
+    }
+    // 如果查询上一个ai拟落子点上的线路有多个最优点位，直接落第一个最优点位
+    if (maxAi.length > 1) {
+        bestVictory.lattice = {
+            ...bestVictory.lattice,
+            id: maxAi[0],
+        };
+    }
+
+    if (bestVictory.lattice)latticeSelectAll.currentPlId = bestVictory.lattice.id;
+    if (maxLattice !== -1)latticeSelectAll.currentPlId = maxLattice;
     return latticeSelectAll;
 };
 
 /**
- * 查询传入棋子周边最长gameMode上有多少条同类型棋子
+ * 查询传入placingPieces棋子周边最长gameMode上有多少条同类型棋子
+ * 拷贝useFindPath用于修改和查询落子点的各个角度，每次查询后反转当前findPath和findPath的type属性用于下次查询和按序拼接
+ * 每次查询都统计当前边上各类型棋子的总数，最后根据去除当前findPath查询角度上点位集合长度小于gameMode的边
  * @param placingPieces //需要查找的点
  * @param gameMode //最长查找路线
  * @param useLatticeList //当前查找的棋盘
@@ -218,11 +238,18 @@ const selectLattic = (placingPieces: ILattice, gameMode: number, useLatticeList:
         lattice_O: 0,
         lattice_X: 0,
     };
+    // 拷贝查询的4条边用作修改
     for (let fI = 0; fI < useFindPath.length; fI++) {
         findPath.push(useFindPath[fI]);
     }
-    let gameModeMap;
-    // 先将点击的点存入findValue
+
+    let useFindValue:IFindValue = {
+        lattice: [],
+        lattice_init: 0,
+        lattice_X: 0,
+        lattice_O: 0,
+    };
+    // 初始化存入当前点击的棋子
     for (let positionI = 0; positionI < useFindPath.length; positionI++) {
         findValue[positionI] = {
             lattice: [placingPieces],
@@ -238,8 +265,7 @@ const selectLattic = (placingPieces: ILattice, gameMode: number, useLatticeList:
             findValue[positionI].lattice_init += 1;
         }
     }
-
-    // 以点击中心向8个方向查找
+    // 以点击中心向8条线路
     for (let findI = 0; findI < (findPath.length * 2); findI++) {
         // 切换往反方向查找
         if (findI === 4) {
@@ -248,37 +274,18 @@ const selectLattic = (placingPieces: ILattice, gameMode: number, useLatticeList:
         // 获取中心点
         findPositionPath[0] = placingPieces.lattice.latticeX;
         findPositionPath[1] = placingPieces.lattice.latticeY;
-        // 每个方向最多查找游戏的次数
-        for (let modeI = 0; modeI < (gameMode - 1); modeI++) {
-            // 每次查找之后没找到就继续延申
-            findPositionPath[0] += findPath[findPosition].value[0];
-            findPositionPath[1] += findPath[findPosition].value[1];
-            // 根据findPositionPath坐标查找key
-            gameModeMap = useLatticeList.get(`lattice${findPositionPath[0]}${findPositionPath[1]}`);
-            // 查找点
-            if (gameModeMap) {
-                if (findPath[findPosition].type) {
-                    findValue[findPosition].lattice.unshift(gameModeMap);
-                } else {
-                    findValue[findPosition].lattice.push(gameModeMap);
-                }
+        // 查询单条线路
+        useFindValue = getSingleLine(gameMode, findPositionPath, findPath[findPosition], useLatticeList);
 
-
-                if (gameModeMap.value === LOCINPIECES_X) {
-                    findValue[findPosition].lattice_X += 1;
-                } else if (gameModeMap.value === LOCINPIECES_O) {
-                    findValue[findPosition].lattice_O += 1;
-                } else {
-                    findValue[findPosition].lattice_init += 1;
-                }
-            }
+        findValue[findPosition].lattice_O += useFindValue.lattice_O;
+        findValue[findPosition].lattice_init += useFindValue.lattice_init;
+        findValue[findPosition].lattice_X += useFindValue.lattice_X;
+        if (findPath[findPosition].type) {
+            findValue[findPosition].lattice.unshift(...useFindValue.lattice);
+        } else {
+            findValue[findPosition].lattice.push(...useFindValue.lattice);
         }
-        // 获取棋盘8个方向未落子的点减去已经落子的点，获取八条边上有更多空位的点位
-        findValue[findPosition].lattice_init = findValue[findPosition].lattice_init - (findValue[findPosition].lattice_O + findValue[findPosition].lattice_X);
-        lattice_count.lattice_init += findValue[findPosition].lattice_init;
-        // 每个棋子8条边上总共有x，o子多少个
-        lattice_count.lattice_O += findValue[findPosition].lattice_O;
-        lattice_count.lattice_X += findValue[findPosition].lattice_X;
+
         // 判断本条线上是否有该游戏最大棋子
         if (placingPieces.value !== 0) {
             if (Array.isArray(findValue[findPosition].lattice) && (findValue[findPosition].lattice_O >= gameMode || findValue[findPosition].lattice_X >= gameMode)) {
@@ -292,8 +299,62 @@ const selectLattic = (placingPieces: ILattice, gameMode: number, useLatticeList:
         findPath[findPosition].type = !findPath[findPosition].type;
         findPosition++;
     }
-    gameState.findValue = { findValue, ...lattice_count };
+    const findFilter = findValue.map((val) => {
+        if (val.lattice.length >= gameMode) {
+            // 储存单各方向的数据统计
+            lattice_count.lattice_init += val.lattice_init;
+            lattice_count.lattice_O += val.lattice_O;
+            lattice_count.lattice_X += val.lattice_X;
+            return val;
+        }
+        return {
+            ...val,
+            lattice: [],
+        };
+    });
+    gameState.findValue = { findValue: findFilter, ...lattice_count };
     return gameState;
+};
+/**
+ * 获取单条线的周边的数据---根据useFindPath向findPath方向查询最多gameMode-1个点位，并统计返回
+ * @param gameMode 游戏胜利需要连接的长度
+ * @param useFindPath 查询的出发点
+ * @param findPath 查询的角度
+ * @param useLatticeList 棋盘map集合
+ */
+const getSingleLine = (gameMode:number, useFindPath:number[], findPath:IUseFindPath, useLatticeList:Map<string, ILattice>):IFindValue => {
+    let gameModeMap;
+    const findPositionPath = useFindPath;
+    const findValue:IFindValue = {
+        lattice: [],
+        lattice_init: 0,
+        lattice_X: 0,
+        lattice_O: 0,
+    };
+    let plValue = 0;
+    // 用于获取各条findPath里的数据，在查询完前4条后归0开始反方向查找
+    // 每个方向最多查找游戏的次数
+    for (let modeI = 0; modeI < (gameMode - 1); modeI++) {
+        // 每次查找之后没找到就继续延申
+        findPositionPath[0] += findPath.value[0];
+        findPositionPath[1] += findPath.value[1];
+        // 根据findPositionPath坐标查找key
+        gameModeMap = useLatticeList.get(`lattice${findPositionPath[0]}${findPositionPath[1]}`);
+        if (gameModeMap && plValue === LOCINPIECES_INIT)plValue = gameModeMap.value;
+        // 查找点
+        if (gameModeMap) {
+            findValue.lattice.push(gameModeMap);
+            if (!(gameModeMap.value === LOCINPIECES_INIT || gameModeMap.value === plValue)) continue;
+            if (gameModeMap.value === LOCINPIECES_X) {
+                findValue.lattice_X += 1;
+            } else if (gameModeMap.value === LOCINPIECES_O) {
+                findValue.lattice_O += 1;
+            } else {
+                findValue.lattice_init += 1;
+            }
+        }
+    }
+    return findValue;
 };
 
 /**
@@ -314,17 +375,20 @@ export const gameType = () => [['黑', '白'], ['X', 'O']];
 /**
  * 优化查找，先去除小于游戏最小查找范围的点，再去除大于最大查找范围的点。
  */
-const opDetermineLattice = (latticeList: ILattice[], gameMode: number, placingPieces: ILattice) => {
-    const { lattice } = placingPieces;
+const opDetermineLattice = (latticeList: ILattice[], gameMode: number, placingPieces?: ILattice) => {
+    const useLattice = placingPieces;
     const latticeMap = new Map<string, ILattice>();
-    let useDetermineUp;
-    let useDetermineEnd;
+    let useDetermineUp = true;
+    let useDetermineEnd = true;
     let mapKey;
     for (let latticeI = 0; latticeI < latticeList.length; latticeI++) {
-        useDetermineUp = latticeList[latticeI].lattice.latticeX >= (lattice.latticeX - gameMode) &&
+        if (useLattice) {
+            const { lattice } = useLattice;
+            useDetermineUp = latticeList[latticeI].lattice.latticeX >= (lattice.latticeX - gameMode) &&
             latticeList[latticeI].lattice.latticeY >= (lattice.latticeY - gameMode);
-        useDetermineEnd = latticeList[latticeI].lattice.latticeX <= (lattice.latticeX + gameMode) &&
+            useDetermineEnd = latticeList[latticeI].lattice.latticeX <= (lattice.latticeX + gameMode) &&
             latticeList[latticeI].lattice.latticeY <= (lattice.latticeY + gameMode);
+        }
         if (useDetermineUp && useDetermineEnd) {
             mapKey = `lattice${latticeList[latticeI].lattice.latticeX}${latticeList[latticeI].lattice.latticeY}`;
             latticeMap.set(mapKey, latticeList[latticeI]);

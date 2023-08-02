@@ -1,21 +1,4 @@
 /**
- * 游戏状态
- * @param GAME_DRAW 游戏平局
- * @param GAME_START 游戏未结束
- * @param GAME_VICTORY_X X获胜
- * @param GAME_VICTORY_O O获胜
- */
-export const EGameStart = {
-    // 游戏平局
-    GAME_DRAW: -1,
-    // 游戏未结束
-    GAME_START: 0,
-    // X获胜
-    GAME_VICTORY_X: 1,
-    // O获胜
-    GAME_VICTORY_O: 2,
-};
-/**
  * 棋手类型
  * @param LOCINPIECES_INIT 默认无显示棋子
  * @param LOCINPIECES_X 棋子X/黑棋标识符

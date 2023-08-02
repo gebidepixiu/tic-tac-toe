@@ -118,6 +118,20 @@ export const determineLattice = (chessboard: { placingPieces: ILattice, latticeL
 };
 
 /**
+ * 存储每条线路上最优落子点的数量，当前点位信息，当前点位周边信息
+ * @param maxVictory 最优落子点的数量
+ * @param lattice 当前点位信息
+ * @param findValue 当前点位周边信息
+ */
+interface IMaxVictoryList {
+    // 最优落子点的数量
+    maxVictory:number;
+    // 当前点位信息
+    lattice?:ILattice;
+    // 当前点位周边信息
+    findValue?:IGameFindValue;
+}
+/**
  * ai查询最优点位--循环useLatticeList查找未落子的点位，优先找当前使用ai的棋手是否差一个子胜利
  * 其次查询下一个棋手是否差一个子胜利，之后统计双方4条边上拟落子后下一步可以胜利的点，取出最优点位
  * 之后判断当前ai和下一步落子人中是否多个最优点位，如果当前ai有就直接落子，如果下一个落子人有多个最优点位，
@@ -134,12 +148,16 @@ export const aiSelect = (gameMode: number, latticeList: ILattice[], placingPiece
     // 获取棋盘每个子之间黑白子个数
     const gameState: IGameState = { gameState: false, currentPlId: -1 };
     let latticeSelectAll: IGameState = { gameState: false, currentPlId: -1 };
+    // 存储落子后游戏结束的点位
     let maxLattice = -1;
-    const count:any = [];
-    const { maxAi, maxPlays }:any = {
+    // 存储未落子点位的信息
+    const count: IMaxVictoryList[] = [];
+    // 储存当前ai和上一个落子人最优点位集合
+    const { maxAi, maxPlays }: { maxAi:number[], maxPlays:number[] } = {
         maxAi: [],
         maxPlays: [],
     };
+    // 统计拟落子点位上所有落子后可连接点的数量
     let maxVictory = 0;
     // 循环棋盘查询棋盘所有未落子的点位
     latticeListOf:for (const useLatticeListKey of useLatticeList.values()) {
@@ -182,12 +200,12 @@ export const aiSelect = (gameMode: number, latticeList: ILattice[], placingPiece
         }
     }
     // 判断存储最优点位
-    let bestVictory:any = { maxVictory: -1 };
+    let bestVictory:IMaxVictoryList = { maxVictory: -1 };
     for (let mI = 0; mI < count.length; mI++) {
         if (count[mI].maxVictory > bestVictory.maxVictory) {
             bestVictory = count[mI];
         } else if (count[mI].maxVictory === bestVictory.maxVictory) {
-            if (count[mI].findValue.lattice_init > bestVictory.findValue.lattice_init) {
+            if (count[mI].findValue!.lattice_init > bestVictory.findValue!.lattice_init) {
                 bestVictory = count[mI];
             }
         }
@@ -204,7 +222,7 @@ export const aiSelect = (gameMode: number, latticeList: ILattice[], placingPiece
     // 如果查询上一个ai拟落子点上的线路有多个最优点位，直接落第一个最优点位
     if (maxAi.length > 1) {
         bestVictory.lattice = {
-            ...bestVictory.lattice,
+            ...bestVictory.lattice!,
             id: maxAi[0],
         };
     }
@@ -355,18 +373,6 @@ const getSingleLine = (gameMode:number, useFindPath:number[], findPath:IUseFindP
         }
     }
     return findValue;
-};
-
-/**
- * ai优先落中子
- * @param latticeList 棋盘布局
- */
-export const aiGetMiddle = (latticeList: ILattice[]) => {
-    const getMiddlePl = parseInt(String(latticeList.length / 2));
-    if (latticeList[getMiddlePl].value === 0) {
-        return latticeList[getMiddlePl].id;
-    }
-    return -1;
 };
 /**
  * 游戏类型

@@ -2,8 +2,7 @@ import React from 'react';
 import GameTitle from './component/GameTitle';
 import GameHitory from './component/GameHitory';
 import '../../assets/css/home.css';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { aiGetMiddle, aiSelect, determineLattice, initChessboard, setGameLayout } from '../../tool/gameTools';
+import { aiSelect, determineLattice, initChessboard, setGameLayout } from '../../tool/gameTools';
 import GameLattice from './component/GameLattice';
 import GameType from './component/GameType';
 import GameAIStart from './component/GameAIStart';

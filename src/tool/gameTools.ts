@@ -210,12 +210,17 @@ export const aiSelect = (gameMode: number, latticeList: ILattice[], placingPiece
             }
         }
     }
-    // 如果查询上一个落子人拟落子点上的线路有多个最优点位，就避开
+    // 如果查询上一个落子人拟落子点上的线路有大于1个最优点位，就避开，如果有大于2个以上的就找当前ai和当前落子人最优点位的交集
     if (maxPlays.length > 1) {
         for (const useLatticeListKey of useLatticeList.values()) {
-            if (!maxPlays.includes(useLatticeListKey.id) && useLatticeListKey.value === LOCINPIECES_INIT) {
-                bestVictory.lattice = useLatticeListKey;
-                break;
+            if (maxPlays.length > 2) {
+                if (maxPlays.includes(useLatticeListKey.id) && maxAi.includes(useLatticeListKey.id) && useLatticeListKey.value === LOCINPIECES_INIT) {
+                    bestVictory.lattice = useLatticeListKey;
+                }
+            } else {
+                if (!maxPlays.includes(useLatticeListKey.id) && useLatticeListKey.value === LOCINPIECES_INIT) {
+                    bestVictory.lattice = useLatticeListKey;
+                }
             }
         }
     }
